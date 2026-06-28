@@ -55,7 +55,7 @@ AI conducts a structured interview:
 - Tailwind CSS
 
 **Backend**
-- Node.js / Express OR FastAPI
+- Node.js / Express.js
 
 **AI Layer**
 - 🚀 Groq AI API
@@ -71,6 +71,3 @@ AI conducts a structured interview:
 
 This project uses Groq AI for ultra-fast LLM inference.
 
-### 🔑 Installation
-```bash
-npm install groq-sdk
