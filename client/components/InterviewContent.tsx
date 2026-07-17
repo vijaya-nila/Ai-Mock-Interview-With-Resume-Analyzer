@@ -43,11 +43,57 @@ const InterviewContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
   const [interviewScore, setInterviewScore] = useState<number | null>(null);
+  const [difficulty, setDifficulty] = useState("");
   const [isInterviewComplete, setIsInterviewComplete] = useState(false);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [skipCount, setSkipCount] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionStartTime] = useState(Date.now());
+  const [overallFeedback, setOverallFeedback] = useState("");
+  const [strengths, setStrengths] = useState<string[]>([]);
+  const [weaknesses, setWeaknesses] = useState<string[]>([]);
+  const [improvements, setImprovements] = useState<string[]>([]);
+  const handleSkip = async () => {
+    if (!sessionId) return;
+
+    setIsLoading(true);
+
+    try {
+      const { data } = await axiosInstance.post(
+        "/api/interviews/submit-answer",
+        {
+          sessionId,
+          answer: "__SKIP__",
+          domain,
+          questionsAnswered,
+        },
+      );
+
+      setQuestionsAnswered((prev) => prev + 1);
+      setSkipCount(data.skipCount);
+
+      if (data.warning) {
+       alert(data.warning);
+      }
+
+      if (data.nextQuestion) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            content: data.nextQuestion,
+            isUser: false,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
       router.push("/login");
@@ -72,6 +118,7 @@ const InterviewContent = () => {
       if (data) {
         setSessionId(data.sessionId);
         setQuestionsAnswered(0);
+        setSkipCount(0);
         setMessages([
           {
             id: "1",
@@ -114,6 +161,10 @@ const InterviewContent = () => {
         { sessionId, answer: userMessage, domain, questionsAnswered },
       );
       if (data) {
+        if (data.repeated) {
+          alert(data.message);
+         return;
+        }
         const newCount = questionsAnswered + 1;
         setQuestionsAnswered(newCount);
         setMessages((prev) => [
@@ -129,6 +180,11 @@ const InterviewContent = () => {
         ]);
         if (data.isComplete || newCount >= TOTAL_QUESTIONS) {
           setInterviewScore(data.score || 75);
+          setDifficulty(data.difficulty || "Medium");
+          setOverallFeedback(data.overallFeedback || "");
+          setStrengths(data.strengths || []);
+          setWeaknesses(data.weaknesses || []);
+          setImprovements(data.improvements || []);
           setIsInterviewComplete(true);
         } else if (data.nextQuestion) {
           setTimeout(() => {
@@ -178,7 +234,6 @@ const InterviewContent = () => {
             color: "text-orange-600 dark:text-orange-400",
           };
   return (
-    
     <div className="min-h-screen bg-background flex flex-col">
       {/* Sticky Header */}
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-16 z-30">
@@ -279,7 +334,12 @@ const InterviewContent = () => {
                 </p>
 
                 <ScoreRing score={score} />
-
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-muted-foreground">Difficulty</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {difficulty}
+                  </p>
+                </div>
                 <p className={`text-sm font-semibold mt-6 ${scoreLabel.color}`}>
                   {scoreLabel.text}
                 </p>
@@ -289,10 +349,16 @@ const InterviewContent = () => {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: "Questions", value: questionsAnswered, icon: "❓" },
+                  // {
+                  //   label: "Domain",
+                  //   value: domain.split("/")[0],
+                  //   icon: domainEmoji[domain] || "🎯",
+                  // },
+
                   {
-                    label: "Domain",
-                    value: domain.split("/")[0],
-                    icon: domainEmoji[domain] || "🎯",
+                    label: "Skipped",
+                    value: skipCount,
+                    icon: "⏭️",
                   },
                   {
                     label: "Duration",
@@ -351,6 +417,51 @@ const InterviewContent = () => {
                 ))}
               </Card>
 
+              <Card className="p-6 border border-border/50 mt-4">
+                <h3 className="font-bold text-lg mb-4">
+                  Final Interview Report
+                </h3>
+
+                <div className="mb-4">
+                  <h4 className="font-semibold text-blue-600">
+                    Overall Feedback
+                  </h4>
+                  <p>{overallFeedback}</p>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="font-semibold text-green-600">Strengths</h4>
+
+                  <ul className="list-disc ml-6">
+                    {strengths.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="font-semibold text-red-600">Weaknesses</h4>
+
+                  <ul className="list-disc ml-6">
+                    {weaknesses.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-orange-600">
+                    Improvements
+                  </h4>
+
+                  <ul className="list-disc ml-6">
+                    {improvements.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </Card>
+
               {/* Actions */}
               <div className="grid grid-cols-2 gap-3">
                 <Button
@@ -387,7 +498,11 @@ const InterviewContent = () => {
                   stronger answers
                 </p>
               </div>
-              <InputBox onSend={handleSendMessage} disabled={isLoading} />
+              <InputBox
+                onSend={handleSendMessage}
+                onSkip={handleSkip}
+                disabled={isLoading}
+              />
             </div>
           </>
         )}

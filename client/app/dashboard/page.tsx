@@ -13,6 +13,8 @@ interface Interview {
   score: number;
   duration: number;
   topic: string;
+  feedback?: string;
+  status?: "Completed" | "Pending";
 }
 
 interface ResumeAnalysis {
@@ -444,6 +446,7 @@ const page = () => {
   const [ShowDomainSelector, setShowDomainSelector] = useState(false);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [filterDomain, setFilterDomain] = useState<String>("All");
+  const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "resume">("history");
 
   useEffect(() => {
@@ -468,6 +471,22 @@ const page = () => {
   };
   const handleSelectDomain = (domain: string) => {
     router.push(`/interview?domain=${encodeURIComponent(domain)}`);
+  };
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this interview?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await axiosInstance.delete(`/api/interviews/${id}`);
+
+      setIntervies((prev) => prev.filter((i) => i.id !== id));
+    } catch (error) {
+      console.error("Failed to delete interview:", error);
+      alert("Failed to delete interview.");
+    }
   };
   if (authLoading) {
     return (
@@ -495,10 +514,16 @@ const page = () => {
     "All",
     ...Array.from(new Set(interviews.map((i) => i.topic))),
   ];
-  const filtered =
-    filterDomain === "All"
-      ? interviews
-      : interviews.filter((i) => i.topic === filterDomain);
+  const filtered = interviews.filter((i) => {
+  const matchesDomain =
+    filterDomain === "All" || i.topic === filterDomain;
+
+  const matchesSearch = i.topic
+    .toLowerCase()
+    .includes(search.toLowerCase());
+
+  return matchesDomain && matchesSearch;
+});
 
   return (
     <div className="min-h-screen bg-background">
@@ -633,6 +658,13 @@ const page = () => {
                 <p className="text-sm text-muted-foreground">
                   Your recent practice sessions
                 </p>
+                <input
+                  type="text"
+                  placeholder="🔍 Search interview..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-64 rounded-lg border border-border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
                 {uniqueDomains.length > 1 && (
                   <div className="flex flex-wrap gap-2">
                     {uniqueDomains.map((d) => (
@@ -720,6 +752,17 @@ const page = () => {
                                 {interview.topic}
                               </p>
                               <ScoreBadge score={interview.score} />
+                              {interview.status && (
+                                <span
+                                  className={`text-[10px] px-2 py-1 rounded-full font-semibold ${
+                                    interview.status === "Completed"
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                  }`}
+                                >
+                                  {interview.status}
+                                </span>
+                              )}
                             </div>
                             <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                               <span>
@@ -735,6 +778,11 @@ const page = () => {
                               </span>
                               <span>⏱ {interview.duration} min</span>
                             </div>
+                            {interview.feedback && (
+                              <p className="mt-2 text-xs text-muted-foreground italic">
+                                💬 {interview.feedback}
+                              </p>
+                            )}
                           </div>
                           <div className="hidden md:flex flex-col items-end gap-1 w-28">
                             <p className="text-xs text-muted-foreground">
@@ -754,6 +802,11 @@ const page = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/interview/${interview.id}`,
+                                )
+                              }
                               className="rounded-full text-xs border-border/60 hidden sm:flex"
                             >
                               Details
@@ -766,6 +819,14 @@ const page = () => {
                               }
                             >
                               Retake
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="rounded-full text-xs"
+                              onClick={() => handleDelete(interview.id)}
+                            >
+                              Delete
                             </Button>
                           </div>
                         </div>

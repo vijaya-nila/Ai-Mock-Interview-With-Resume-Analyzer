@@ -4,8 +4,13 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+<<<<<<< HEAD
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
+=======
+  "start": "node src/index.js",
+  "dev": "nodemon src/index.js"
+>>>>>>> 21678ef (Complete Adaptive Interview Engine enhancements)
   },
   "keywords": [],
   "author": "",

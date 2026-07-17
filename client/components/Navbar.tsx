@@ -38,11 +38,13 @@ export function Navbar() {
         { href: "/dashboard", label: "Dashboard", icon: "⚡" },
         { href: "/practice", label: "Practice", icon: "🎯" },
         { href: "/history", label: "My Sessions", icon: "📊" },
+        { href: "/profile", label: "Profile", icon: "👤" },
       ]
     : [
         { href: "/#features", label: "Features", icon: "✨" },
         { href: "/#how-it-works", label: "How It Works", icon: "🔍" },
         { href: "/#domains", label: "Domains", icon: "🧩" },
+        { href: "/profile", label: "Profile", icon: "👤" },
       ];
 
   return (
