@@ -17,15 +17,31 @@ const InterviewSchema = new mongoose.Schema({
     enum: ["Easy", "Medium", "Hard"],
     default: "Easy",
   },
+  currentQuestion: {
+    type: String,
+    default: "",
+  },
 
+  currentQuestionIndex: {
+    type: Number,
+    default: 0,
+  },
+
+  askedQuestions: {
+    type: [String],
+    default: [],
+  },
+
+  skippedQuestions: {
+    type: [String],
+    default: [],
+  },
   duration: { type: Number, default: 0 },
   questionsAnswered: { type: Number, default: 0 },
   skipCount: {
     type: Number,
     default: 0,
   },
-
-messages: [MessageSchema],
 
   messages: [MessageSchema],
 

@@ -41,8 +41,24 @@ const startInterview = async (req, res) => {
     const interview = await Interview.create({
       userId: req.userId,
       domain,
+
       difficulty: "Easy",
-      messages: [{ role: "ai", content: firstQuestion }],
+
+      currentQuestion: firstQuestion,
+      currentQuestionIndex: 1,
+      askedQuestions: [firstQuestion],
+      skippedQuestions: [],
+
+      score: 0,
+      questionsAnswered: 0,
+      skipCount: 0,
+
+      messages: [
+        {
+          role: "ai",
+          content: firstQuestion,
+        },
+      ],
     });
     res.status(201).json({
       sessionId: interview._id,
@@ -115,6 +131,7 @@ const submitAnswer = async (req, res) => {
       });
 
       const nextQuestion = skipResponse.choices[0].message.content.trim();
+      interview.skippedQuestions.push(interview.currentQuestion);
 
       interview.messages.push({
         role: "ai",
@@ -122,24 +139,26 @@ const submitAnswer = async (req, res) => {
         timestamp: new Date(),
       });
 
-      interview.questionsAnswered = questionsAnswered + 1;
+      interview.currentQuestion = nextQuestion;
+      interview.currentQuestionIndex += 1;
+
+      interview.askedQuestions.push(nextQuestion);
+
+      interview.questionsAnswered += 1;
       interview.skipCount += 1;
+
+
       await interview.save();
 
       return res.json({
         nextQuestion,
         skipped: true,
         isComplete: false,
+        skipCount: interview.skipCount,
+        difficulty: interview.difficulty,
       });
     }
 
-    // const interview = await Interview.findOne({
-    //   _id: sessionId,
-    //   userId: req.userId,
-    // });
-    // if (!interview)
-    //   return res.status(404).json({ message: "Session not found" });
-    // let currentDifficulty = interview.difficulty;
 
     // 1️⃣ Generate feedback on the answer
     const feedbackResponse = await groq.chat.completions.create({
@@ -241,7 +260,7 @@ const submitAnswer = async (req, res) => {
       content: feedback,
       timestamp: new Date(),
     });
-    interview.questionsAnswered = questionsAnswered + 1;
+    interview.questionsAnswered += 1;
     interview.difficulty = currentDifficulty;
 
     if (isComplete) {
@@ -332,6 +351,7 @@ const submitAnswer = async (req, res) => {
       await interview.save();
 
       return res.json({
+        sessionId: interview._id,
         score,
         difficulty,
         isComplete: true,
@@ -385,22 +405,39 @@ const submitAnswer = async (req, res) => {
       max_tokens: 150,
     });
 
-    const nextQuestion = nextQuestionResponse.choices[0].message.content.trim();
+   const nextQuestion = nextQuestionResponse.choices[0].message.content.trim();
 
-    interview.messages.push({
-      role: "ai",
-      content: nextQuestion,
-      timestamp: new Date(),
-    });
-    await interview.save();
+   // Prevent duplicate questions
+   if (interview.askedQuestions.includes(nextQuestion)) {
+     return res.json({
+       feedback,
+       score,
+       difficulty: currentDifficulty,
+       nextQuestion:
+         "Can you explain a real-world project where you used " + domain + "?",
+       isComplete: false,
+     });
+   }
 
-    return res.json({
-      feedback,
-      score,
-      difficulty,
-      nextQuestion,
-      isComplete: false,
-    });
+   interview.currentQuestion = nextQuestion;
+   interview.currentQuestionIndex += 1;
+   interview.askedQuestions.push(nextQuestion);
+
+   interview.messages.push({
+     role: "ai",
+     content: nextQuestion,
+     timestamp: new Date(),
+   });
+
+   await interview.save();
+
+   return res.json({
+     feedback,
+     score,
+     difficulty: currentDifficulty,
+     nextQuestion,
+     isComplete: false,
+   });
   } catch (err) {
     console.error("submitAnswer error:", err);
     res

@@ -71,7 +71,10 @@ const InterviewContent = () => {
       );
 
       setQuestionsAnswered((prev) => prev + 1);
-      setSkipCount(data.skipCount);
+      setSkipCount((prev) => prev + 1);
+      if (data.difficulty) {
+        setDifficulty(data.difficulty);
+      }
 
       if (data.warning) {
        alert(data.warning);
@@ -167,6 +170,7 @@ const InterviewContent = () => {
         }
         const newCount = questionsAnswered + 1;
         setQuestionsAnswered(newCount);
+        setDifficulty(data.difficulty || "Easy");
         setMessages((prev) => [
           ...prev,
           {
@@ -179,13 +183,15 @@ const InterviewContent = () => {
           },
         ]);
         if (data.isComplete || newCount >= TOTAL_QUESTIONS) {
-          setInterviewScore(data.score || 75);
-          setDifficulty(data.difficulty || "Medium");
-          setOverallFeedback(data.overallFeedback || "");
-          setStrengths(data.strengths || []);
-          setWeaknesses(data.weaknesses || []);
-          setImprovements(data.improvements || []);
-          setIsInterviewComplete(true);
+          // setInterviewScore(data.score || 75);
+          // setDifficulty(data.difficulty || "Medium");
+          // setOverallFeedback(data.overallFeedback || "");
+          // setStrengths(data.strengths || []);
+          // setWeaknesses(data.weaknesses || []);
+          // setImprovements(data.improvements || []);
+          // setIsInterviewComplete(true);
+
+         router.push(`/dashboard/interview/${data.sessionId}`);
         } else if (data.nextQuestion) {
           setTimeout(() => {
             setMessages((prev) => [

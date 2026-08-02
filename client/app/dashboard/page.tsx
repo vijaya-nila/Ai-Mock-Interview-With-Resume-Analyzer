@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import axiosInstance from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+
 
 interface Interview {
   id: string;
@@ -19,10 +21,22 @@ interface Interview {
 
 interface ResumeAnalysis {
   summary: string;
-  strengths: string[];
-  recommendedDomains: { label: string; reason: string; confidence: number }[];
   experienceLevel: "Junior" | "Mid" | "Senior";
+  resumeScore: number;
+
   skillsDetected: string[];
+  strengths: string[];
+
+  education: string[];
+  projects: string[];
+  certifications: string[];
+  missingSkills: string[];
+
+  recommendedDomains: {
+    label: string;
+    reason: string;
+    confidence: number;
+  }[];
 }
 
 const INTERVIEW_DOMAINS = [
@@ -41,8 +55,10 @@ const INTERVIEW_DOMAINS = [
 ];
 function ResumePanel({
   onDomainSelect,
+  onAnalysisComplete,
 }: {
   onDomainSelect: (d: string) => void;
+  onAnalysisComplete: (analysis: ResumeAnalysis) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -81,6 +97,7 @@ function ResumePanel({
     setStep("upload");
   };
   const handleAnalyze = async () => {
+    alert("Button Clicked");
     if (!file) return;
     setStep("analyzing");
     setError(null);
@@ -99,7 +116,9 @@ function ResumePanel({
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
+      console.log("Analysis:", data.analysis);
       setAnalysis(data.analysis);
+      onAnalysisComplete(data.analysis); 
       setStep("results");
     } catch (error: any) {
       setError(error?.response?.data?.message);
@@ -198,6 +217,7 @@ function ResumePanel({
                       {file.type.includes("pdf") ? "PDF" : "Document"}
                     </p>
                   </div>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -312,6 +332,23 @@ function ResumePanel({
         {/* Results */}
         {step === "results" && analysis && (
           <div className="space-y-5">
+            {/* Resume Score */}
+            <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+              <p className="text-xs font-bold text-blue-600 mb-2">
+                📊 Resume Score
+              </p>
+
+              <div className="flex items-center gap-3">
+                <div className="w-full bg-border rounded-full h-3 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-green-500 h-3"
+                    style={{ width: `${analysis.resumeScore}%` }}
+                  />
+                </div>
+
+                <span className="font-bold">{analysis.resumeScore}%</span>
+              </div>
+            </div>
             {/* Summary */}
             <div className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
@@ -428,7 +465,51 @@ function ResumePanel({
                 </ul>
               </div>
             )}
+            {/* Missing Skills */}
+            {analysis.missingSkills.length > 0 && (
+              <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+                <p className="text-xs font-bold text-red-600 mb-2">
+                  ❌ Missing Skills
+                </p>
 
+                <div className="flex flex-wrap gap-2">
+                  {analysis.missingSkills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects */}
+            {analysis.projects.length > 0 && (
+              <div className="p-4 border rounded-xl">
+                <p className="text-xs font-bold mb-2">💻 Projects</p>
+
+                <ul className="list-disc ml-5 text-xs">
+                  {analysis.projects.map((project) => (
+                    <li key={project}>{project}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Certifications */}
+            {analysis.certifications.length > 0 && (
+              <div className="p-4 border rounded-xl">
+                <p className="text-xs font-bold mb-2">📜 Certifications</p>
+
+                <ul className="list-disc ml-5 text-xs">
+                  {analysis.certifications.map((cert) => (
+                    <li key={cert}>{cert}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="text-[11px] text-muted-foreground text-center">
               Click any domain above to start a tailored interview session
             </p>
@@ -438,6 +519,7 @@ function ResumePanel({
     </Card>
   );
 }
+
 const page = () => {
   const router = useRouter();
   const { isLoggedIn, isLoading: authLoading, user } = useAuth();
@@ -448,7 +530,7 @@ const page = () => {
   const [filterDomain, setFilterDomain] = useState<String>("All");
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "resume">("history");
-
+  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
       router.push("/login");
@@ -515,15 +597,12 @@ const page = () => {
     ...Array.from(new Set(interviews.map((i) => i.topic))),
   ];
   const filtered = interviews.filter((i) => {
-  const matchesDomain =
-    filterDomain === "All" || i.topic === filterDomain;
+    const matchesDomain = filterDomain === "All" || i.topic === filterDomain;
 
-  const matchesSearch = i.topic
-    .toLowerCase()
-    .includes(search.toLowerCase());
+    const matchesSearch = i.topic.toLowerCase().includes(search.toLowerCase());
 
-  return matchesDomain && matchesSearch;
-});
+    return matchesDomain && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -534,17 +613,31 @@ const page = () => {
             <p className="text-sm text-muted-foreground font-medium mb-1">
               👋 Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
             </p>
+
             <h1 className="text-3xl md:text-4xl font-black text-foreground">
               Your Dashboard
             </h1>
           </div>
-          <Button
-            size="lg"
-            onClick={() => setShowDomainSelector(true)}
-            className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all self-start sm:self-auto"
-          >
-            ⚡ New Interview
-          </Button>
+
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/profile">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                👤 Candidate Profile
+              </Button>
+            </Link>
+            
+
+            <Button
+              size="lg"
+              onClick={() => setShowDomainSelector(true)}
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all"
+            >
+              ⚡ New Interview
+            </Button>
+          </div>
         </section>
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -838,7 +931,44 @@ const page = () => {
             </div>
           )}
           {activeTab === "resume" && (
-            <ResumePanel onDomainSelect={handleSelectDomain} />
+            <div className="space-y-6">
+              <ResumePanel
+                onDomainSelect={handleSelectDomain}
+                onAnalysisComplete={setResumeAnalysis}
+              />
+
+              {resumeAnalysis && (
+                <Card className="p-5 border border-border/50">
+                  <h3 className="text-lg font-bold mb-4">
+                    🚀 AI Learning Roadmap
+                  </h3>
+
+                  <div className="space-y-3">
+                    {resumeAnalysis.missingSkills.map((skill, index) => (
+                      <div
+                        key={skill}
+                        className="p-3 rounded-lg border bg-muted/20"
+                      >
+                        <p className="font-semibold">
+                          Step {index + 1}: Learn {skill}
+                        </p>
+
+                        <p className="text-sm text-muted-foreground">
+                          Improve your understanding of {skill} and complete at
+                          least one project before attending interviews.
+                        </p>
+                        <ul className="text-sm mt-3 space-y-1 list-disc ml-5">
+                          <li>📚 Learn the fundamentals</li>
+                          <li>🎥 Watch tutorials and practice</li>
+                          <li>💻 Build one mini project</li>
+                          <li>📝 Solve interview questions</li>
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
           )}
         </section>
       </div>
