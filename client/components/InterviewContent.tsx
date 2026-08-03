@@ -39,6 +39,7 @@ const InterviewContent = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const domain = searchParams.get("domain") || "General";
+  const company = searchParams.get("company") || "Startup";
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
@@ -54,6 +55,7 @@ const InterviewContent = () => {
   const [strengths, setStrengths] = useState<string[]>([]);
   const [weaknesses, setWeaknesses] = useState<string[]>([]);
   const [improvements, setImprovements] = useState<string[]>([]);
+  
   const handleSkip = async () => {
     if (!sessionId) return;
 
@@ -117,6 +119,7 @@ const InterviewContent = () => {
       setIsLoading(true);
       const { data } = await axiosInstance.post("/api/interviews/start", {
         domain,
+        company,
       });
       if (data) {
         setSessionId(data.sessionId);
@@ -183,13 +186,7 @@ const InterviewContent = () => {
           },
         ]);
         if (data.isComplete || newCount >= TOTAL_QUESTIONS) {
-          // setInterviewScore(data.score || 75);
-          // setDifficulty(data.difficulty || "Medium");
-          // setOverallFeedback(data.overallFeedback || "");
-          // setStrengths(data.strengths || []);
-          // setWeaknesses(data.weaknesses || []);
-          // setImprovements(data.improvements || []);
-          // setIsInterviewComplete(true);
+      
 
          router.push(`/dashboard/interview/${data.sessionId}`);
         } else if (data.nextQuestion) {
@@ -253,7 +250,7 @@ const InterviewContent = () => {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h1 className="text-base font-bold text-foreground truncate">
-                    {domain} Interview
+                    {company} - {domain} Interview
                   </h1>
                   {!isInterviewComplete && (
                     <span className="flex items-center gap-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
@@ -355,11 +352,7 @@ const InterviewContent = () => {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: "Questions", value: questionsAnswered, icon: "❓" },
-                  // {
-                  //   label: "Domain",
-                  //   value: domain.split("/")[0],
-                  //   icon: domainEmoji[domain] || "🎯",
-                  // },
+          
 
                   {
                     label: "Skipped",

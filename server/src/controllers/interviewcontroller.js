@@ -19,8 +19,12 @@ Return ONLY the question, nothing else.
 // ── Start Interview ───────────────────────────────────────
 const startInterview = async (req, res) => {
   try {
-    const { domain } = req.body;
-    if (!domain) return res.status(400).json({ message: "Domain is required" });
+    const { domain, company } = req.body;
+
+    if (!domain || !company)
+      return res.status(400).json({
+        message: "Domain and Company are required",
+      });
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -41,6 +45,7 @@ const startInterview = async (req, res) => {
     const interview = await Interview.create({
       userId: req.userId,
       domain,
+      company,
 
       difficulty: "Easy",
 
@@ -62,6 +67,7 @@ const startInterview = async (req, res) => {
     });
     res.status(201).json({
       sessionId: interview._id,
+      company,
       question: firstQuestion,
     });
   } catch (err) {

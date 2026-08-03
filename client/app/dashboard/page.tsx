@@ -531,6 +531,16 @@ const page = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "resume">("history");
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
+  const [company, setCompany] = useState("Google");
+
+  const companies = [
+    "Google",
+    "Amazon",
+    "Microsoft",
+    "TCS",
+    "Infosys",
+    "Startup",
+  ];
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
       router.push("/login");
@@ -628,7 +638,6 @@ const page = () => {
                 👤 Candidate Profile
               </Button>
             </Link>
-            
 
             <Button
               size="lg"
@@ -989,6 +998,23 @@ const page = () => {
                   Choose what you want to practice today
                 </p>
               </div>
+              <div className="mb-5">
+                <label className="block text-sm font-medium mb-2">
+                  Select Company
+                </label>
+
+                <select
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full border rounded-lg p-2 bg-background"
+                >
+                  {companies.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button
                 onClick={() => setShowDomainSelector(false)}
                 className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-sm"
@@ -1005,7 +1031,9 @@ const page = () => {
                   onMouseLeave={() => setHoveredDomain(null)}
                   onClick={() => {
                     setShowDomainSelector(false);
-                    handleSelectDomain(domain.label);
+                    router.push(
+                      `/interview?domain=${encodeURIComponent(domain.label)}&company=${encodeURIComponent(company)}`,
+                    );
                   }}
                   className={`flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-150 ${
                     hoveredDomain === domain.label

@@ -9,6 +9,10 @@ const MessageSchema = new mongoose.Schema({
 const InterviewSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   domain: { type: String, required: true },
+  company: {
+    type: String,
+    required: true,
+  },
 
   score: { type: Number, default: 0 },
 
