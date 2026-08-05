@@ -5,15 +5,18 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const systemPrompt = (domain) =>
+const systemPrompt = (domain, company) =>
   `
-You are a senior technical interviewer conducting a mock interview for a ${domain} developer role.
-Ask one clear, specific technical question at a time.
-After the candidate answers, provide feedback and the next question.
+You are a senior technical interviewer from ${company}.
 
-Return ONLY the question, nothing else.
+Conduct a realistic ${company} interview for a ${domain} role.
 
-
+Rules:
+- Ask one technical question at a time.
+- Questions should match ${company}'s interview style.
+- Start with easy questions and gradually increase difficulty.
+- Do not explain the answer.
+- Return ONLY the interview question.
 `.trim();
 
 // ── Start Interview ───────────────────────────────────────
@@ -29,10 +32,10 @@ const startInterview = async (req, res) => {
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        { role: "system", content: systemPrompt(domain) },
+        { role: "system", content: systemPrompt(domain, company) },
         {
           role: "user",
-          content: `Start the interview. Ask me the first ${domain} technical question. Only ask the question, no preamble.`,
+          content: `Start a ${company} style interview for a ${domain} position. Ask only the first technical question.`,
         },
       ],
       temperature: 0.7,
@@ -85,9 +88,9 @@ const submitAnswer = async (req, res) => {
       sessionId,
       answer,
       domain = "General",
+      company = "Startup",
       questionsAnswered = 0,
     } = req.body;
-
     if (!sessionId || !answer)
       return res.status(400).json({ message: "Missing required fields" });
 
@@ -124,7 +127,7 @@ const submitAnswer = async (req, res) => {
 
             Current difficulty: ${currentDifficulty}
 
-            Generate ONE easier ${domain} interview question.
+            Generate ONE easier ${company} style ${domain} interview question.
 
             Rules:
             - Ask only ONE question.
@@ -153,7 +156,6 @@ const submitAnswer = async (req, res) => {
       interview.questionsAnswered += 1;
       interview.skipCount += 1;
 
-
       await interview.save();
 
       return res.json({
@@ -164,7 +166,6 @@ const submitAnswer = async (req, res) => {
         difficulty: interview.difficulty,
       });
     }
-
 
     // 1️⃣ Generate feedback on the answer
     const feedbackResponse = await groq.chat.completions.create({
@@ -201,14 +202,19 @@ const submitAnswer = async (req, res) => {
           Evaluate this interview answer.
 
           Answer:
-          "${answer}"
+         "${answer}"
 
           Return ONLY JSON like this:
 
           {
             "score": 85,
-            "difficulty": "Hard"
+            "difficulty": "Medium"
           }
+
+          Rules:
+          - If the answer is excellent → difficulty = Hard
+          - If the answer is average → difficulty = Medium
+          - If the answer is weak → difficulty = Easy
 
           Score should be between 0-100.
           Difficulty must be Easy, Medium or Hard.
@@ -234,27 +240,15 @@ const submitAnswer = async (req, res) => {
 
       score = evaluation.score || 75;
       difficulty = evaluation.difficulty || "Medium";
-      // Adaptive difficulty
-      if (score >= 80) {
-        if (currentDifficulty === "Easy") {
-          currentDifficulty = "Medium";
-        } else if (currentDifficulty === "Medium") {
-          currentDifficulty = "Hard";
-        }
-      } else if (score < 50) {
-        if (currentDifficulty === "Hard") {
-          currentDifficulty = "Medium";
-        } else if (currentDifficulty === "Medium") {
-          currentDifficulty = "Easy";
-        }
-      }
+
+      // AI decides the next difficulty
+      currentDifficulty = difficulty;
     } catch (error) {
       console.log("Evaluation parsing failed:", error.message);
     }
 
-    const isComplete = questionsAnswered >= 2; // complete after 3 questions (0, 1, 2)
+    const isComplete = questionsAnswered >= 2; // complete after 3 questions
     let overallAnalysis = null;
-
     // 2️⃣ Save messages to DB
     interview.messages.push({
       role: "user",
@@ -283,7 +277,13 @@ const submitAnswer = async (req, res) => {
             You are a senior interviewer.
 
             Based on this interview conversation, return ONLY JSON.
-
+            Rules:
+            - strengths must contain at least 3 meaningful points.
+            - weaknesses must contain at least 2 meaningful points.
+            - improvements must contain at least 3 meaningful points.
+            - Never leave any field empty.
+            - Never return "" inside arrays.
+            - Even if the candidate performs poorly, provide positive strengths such as willingness to answer, participation, or eagerness to learn.
             Conversation:
             ${conversation}
 
@@ -345,9 +345,18 @@ const submitAnswer = async (req, res) => {
       interview.isComplete = true;
 
       interview.feedback = overallAnalysis?.overallFeedback || feedback;
-      interview.strengths = overallAnalysis?.strengths || [];
-      interview.weaknesses = overallAnalysis?.weaknesses || [];
-      interview.improvements = overallAnalysis?.improvements || [];
+
+      interview.strengths = (overallAnalysis?.strengths || []).filter(
+        (item) => item.trim() !== "",
+      );
+
+      interview.weaknesses = (overallAnalysis?.weaknesses || []).filter(
+        (item) => item.trim() !== "",
+      );
+
+      interview.improvements = (overallAnalysis?.improvements || []).filter(
+        (item) => item.trim() !== "",
+      );
 
       interview.duration = Math.max(
         1,
@@ -359,7 +368,7 @@ const submitAnswer = async (req, res) => {
       return res.json({
         sessionId: interview._id,
         score,
-        difficulty,
+        difficulty: currentDifficulty,
         isComplete: true,
 
         overallFeedback: overallAnalysis?.overallFeedback,
@@ -383,7 +392,8 @@ const submitAnswer = async (req, res) => {
       messages: [
         {
           role: "user",
-          content: `You are an expert ${domain} interviewer.
+          content: `You are an expert interviewer from ${company}.
+          Generate questions similar to ${company}'s real interview process.
 
           Current interview difficulty is ${currentDifficulty}.
 
@@ -411,39 +421,39 @@ const submitAnswer = async (req, res) => {
       max_tokens: 150,
     });
 
-   const nextQuestion = nextQuestionResponse.choices[0].message.content.trim();
+    const nextQuestion = nextQuestionResponse.choices[0].message.content.trim();
 
-   // Prevent duplicate questions
-   if (interview.askedQuestions.includes(nextQuestion)) {
-     return res.json({
-       feedback,
-       score,
-       difficulty: currentDifficulty,
-       nextQuestion:
-         "Can you explain a real-world project where you used " + domain + "?",
-       isComplete: false,
-     });
-   }
+    // Prevent duplicate questions
+    if (interview.askedQuestions.includes(nextQuestion)) {
+      return res.json({
+        feedback,
+        score,
+        difficulty: currentDifficulty,
+        nextQuestion:
+          "Can you explain a real-world project where you used " + domain + "?",
+        isComplete: false,
+      });
+    }
 
-   interview.currentQuestion = nextQuestion;
-   interview.currentQuestionIndex += 1;
-   interview.askedQuestions.push(nextQuestion);
+    interview.currentQuestion = nextQuestion;
+    interview.currentQuestionIndex += 1;
+    interview.askedQuestions.push(nextQuestion);
 
-   interview.messages.push({
-     role: "ai",
-     content: nextQuestion,
-     timestamp: new Date(),
-   });
+    interview.messages.push({
+      role: "ai",
+      content: nextQuestion,
+      timestamp: new Date(),
+    });
 
-   await interview.save();
+    await interview.save();
 
-   return res.json({
-     feedback,
-     score,
-     difficulty: currentDifficulty,
-     nextQuestion,
-     isComplete: false,
-   });
+    return res.json({
+      feedback,
+      score,
+      difficulty: currentDifficulty,
+      nextQuestion,
+      isComplete: false,
+    });
   } catch (err) {
     console.error("submitAnswer error:", err);
     res
@@ -459,17 +469,19 @@ const getInterviews = async (req, res) => {
       userId: req.userId,
       isComplete: true,
     })
-      .select("domain score duration questionsAnswered createdAt")
+      .select("domain company difficulty score duration questionsAnswered createdAt")
       .sort({ createdAt: -1 });
 
     const mapped = interviews.map((i) => ({
       id: i._id,
       topic: i.domain,
+      company: i.company,
+      difficulty: i.difficulty,
       score: i.score,
       duration: i.duration,
+      questionsAnswered: i.questionsAnswered,
       date: i.createdAt,
     }));
-
     res.json({ interviews: mapped });
   } catch (err) {
     res.status(500).json({

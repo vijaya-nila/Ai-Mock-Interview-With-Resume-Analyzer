@@ -68,6 +68,7 @@ const InterviewContent = () => {
           sessionId,
           answer: "__SKIP__",
           domain,
+          company,
           questionsAnswered,
         },
       );
@@ -164,7 +165,13 @@ const InterviewContent = () => {
     try {
       const { data } = await axiosInstance.post(
         "/api/interviews/submit-answer",
-        { sessionId, answer: userMessage, domain, questionsAnswered },
+        {
+          sessionId,
+          answer: userMessage,
+          domain,
+          company,
+          questionsAnswered,
+        },
       );
       if (data) {
         if (data.repeated) {
