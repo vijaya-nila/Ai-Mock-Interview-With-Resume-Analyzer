@@ -21,6 +21,13 @@ const InterviewSchema = new mongoose.Schema({
     enum: ["Easy", "Medium", "Hard"],
     default: "Easy",
   },
+
+  companyReadiness: {
+    type: String,
+    enum: ["Strong Fit", "Potential Fit", "Needs Improvement", "Not Ready"],
+    default: "Not Ready",
+  },
+
   currentQuestion: {
     type: String,
     default: "",

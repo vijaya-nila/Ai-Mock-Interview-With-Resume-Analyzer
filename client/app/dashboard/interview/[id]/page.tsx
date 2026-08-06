@@ -17,6 +17,7 @@ interface Interview {
   company: string;
   domain: string;
   difficulty: string;
+  companyReadiness: string;
   score: number;
   duration: number;
   feedback: string;
@@ -143,6 +144,28 @@ const Page = () => {
             }`}
           >
             {interview.difficulty}
+          </span>
+        </Card>
+
+        <Card className="p-4 text-center">
+          <p className="text-2xl">🏅</p>
+
+          <p className="text-sm text-muted-foreground mt-2">
+            Company Readiness
+          </p>
+
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              interview.companyReadiness === "Strong Fit"
+                ? "bg-green-100 text-green-700"
+                : interview.companyReadiness === "Potential Fit"
+                  ? "bg-blue-100 text-blue-700"
+                  : interview.companyReadiness === "Needs Improvement"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+            }`}
+          >
+            {interview.companyReadiness}
           </span>
         </Card>
         <Card className="p-4 text-center">

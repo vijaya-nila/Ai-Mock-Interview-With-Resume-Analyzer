@@ -341,6 +341,17 @@ const submitAnswer = async (req, res) => {
       }
     }
     if (isComplete) {
+      let companyReadiness = "Not Ready";
+
+      if (score >= 85) {
+        companyReadiness = "Strong Fit";
+      } else if (score >= 70) {
+        companyReadiness = "Potential Fit";
+      } else if (score >= 50) {
+        companyReadiness = "Needs Improvement";
+      }
+
+      interview.companyReadiness = companyReadiness;
       interview.score = score;
       interview.isComplete = true;
 
@@ -369,6 +380,7 @@ const submitAnswer = async (req, res) => {
         sessionId: interview._id,
         score,
         difficulty: currentDifficulty,
+        companyReadiness,
         isComplete: true,
 
         overallFeedback: overallAnalysis?.overallFeedback,
