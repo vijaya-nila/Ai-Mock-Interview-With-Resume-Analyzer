@@ -254,43 +254,62 @@ const InterviewContent = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center text-xl flex-shrink-0">
                 {domainEmoji[domain] || "🎯"}
               </div>
+
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-base font-bold text-foreground truncate">
-                    {company} - {domain} Interview
+                  <h1 className="text-lg font-bold text-foreground truncate">
+                    🏢 {company} Interview
                   </h1>
+
                   {!isInterviewComplete && (
-                    <span className="flex items-center gap-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="flex items-center gap-1 text-xs bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                       Live
                     </span>
                   )}
                 </div>
+
+                <p className="text-xs text-muted-foreground">💻 {domain}</p>
+
                 <p className="text-xs text-muted-foreground">
                   AI Mock Interview Session
                 </p>
               </div>
             </div>
-
             {/* Center: Progress */}
             {!isInterviewComplete && (
-              <div className="hidden sm:flex flex-col items-center gap-1.5">
+              <div className="hidden sm:flex flex-col items-center gap-2">
                 <ProgressDots
                   current={questionsAnswered}
                   total={TOTAL_QUESTIONS}
                 />
-                <p className="text-xs text-muted-foreground">
+
+                <p className="text-xs font-semibold text-muted-foreground">
                   Question {Math.min(questionsAnswered + 1, TOTAL_QUESTIONS)} of{" "}
                   {TOTAL_QUESTIONS}
                 </p>
+
+                <div className="w-40 h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700"
+                    style={{
+                      width: `${(questionsAnswered / TOTAL_QUESTIONS) * 100}%`,
+                    }}
+                  />
+                </div>
               </div>
             )}
             <div className="flex items-center gap-2 flex-shrink-0">
               {!isInterviewComplete && (
-                <div className="hidden sm:flex items-center gap-1.5 bg-muted/50 border border-border/60 px-3 py-1.5 rounded-full">
-                  <span className="text-xs text-muted-foreground">⏱</span>
-                  <span className="text-sm font-mono font-semibold text-foreground tabular-nums">
-                    {formatTime(elapsedSeconds)}
+                <div className="hidden sm:flex items-center gap-2 bg-muted/50 border border-border/60 px-3 py-1.5 rounded-full">
+                  <span className="text-xs text-muted-foreground">
+                    {questionsAnswered}/{TOTAL_QUESTIONS}
+                  </span>
+
+                  <span className="text-muted-foreground">|</span>
+
+                  <span className="text-sm font-mono font-semibold text-primary">
+                    ⏱ {formatTime(elapsedSeconds)}
                   </span>
                 </div>
               )}
@@ -359,7 +378,6 @@ const InterviewContent = () => {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: "Questions", value: questionsAnswered, icon: "❓" },
-          
 
                   {
                     label: "Skipped",
