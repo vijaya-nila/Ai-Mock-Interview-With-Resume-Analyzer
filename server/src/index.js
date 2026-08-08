@@ -8,6 +8,7 @@ const interviewRoutes = require("./routes/interview.js");
 const resumeRoutes = require("./routes/resume.js");
 const userRoutes = require("./routes/user.js");
 const placementRoutes = require("./routes/placement.js");
+const challengeRoutes = require("./routes/challengeRoutes.js");
 
 connectDB();
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/interviews", interviewRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/placement", placementRoutes);
+app.use("/api/challenges", challengeRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
