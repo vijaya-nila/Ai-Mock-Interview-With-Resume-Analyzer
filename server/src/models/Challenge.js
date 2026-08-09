@@ -45,6 +45,11 @@ const ChallengeSchema = new mongoose.Schema(
       default: [],
     },
 
+    correctAnswer: {
+      type: String,
+      default: "",
+    },
+
     score: {
       type: Number,
       default: 0,
@@ -67,7 +72,7 @@ const ChallengeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Challenge", ChallengeSchema);

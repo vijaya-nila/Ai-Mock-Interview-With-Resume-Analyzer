@@ -55,6 +55,24 @@ const ChallengePage = () => {
     }
   };
 
+  const startChallenge = async (challengeId: string) => {
+    try {
+      setError("");
+
+      const { data } = await axiosInstance.post("/api/challenges/start", {
+        challengeId,
+      });
+
+      console.log("Challenge Started:", data);
+
+      // Attempt ID save செய்து challenge attempt page-க்கு செல்லும்
+      window.location.href = `/challenges/${challengeId}/attempt?attemptId=${data.attemptId}`;
+    } catch (err) {
+      console.error("Start Challenge Error:", err);
+      setError("Failed to start challenge.");
+    }
+  };
+
   useEffect(() => {
     fetchChallenges();
   }, [category, type]);
@@ -207,9 +225,7 @@ const ChallengePage = () => {
                   {/* Start Button */}
                   <Button
                     className="w-full mt-5"
-                    onClick={() => {
-                      window.location.href = `/challenges/${challenge._id}`;
-                    }}
+                    onClick={() => startChallenge(challenge._id)}
                   >
                     🚀 Start Challenge
                   </Button>

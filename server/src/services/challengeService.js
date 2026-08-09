@@ -37,6 +37,7 @@ Domain: ${domain}
 Company: ${company}
 
 Requirements:
+
 - The challenge must be suitable for interview preparation.
 - Match the selected category.
 - Make the challenge realistic and useful.
@@ -46,7 +47,8 @@ Requirements:
 - For Domain-Specific, focus on the selected technical domain.
 - Difficulty should be Medium.
 - Return ONLY valid JSON.
-- Do not include markdown or code blocks.
+- Do not include markdown.
+- Do not include code blocks.
 
 Return exactly this format:
 
@@ -60,6 +62,7 @@ Return exactly this format:
 
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
+
     messages: [
       {
         role: "system",
@@ -70,6 +73,7 @@ Return exactly this format:
         content: `Generate the ${frequency} ${category} challenge now.`,
       },
     ],
+
     temperature: 0.7,
     max_tokens: 500,
   });
@@ -77,7 +81,7 @@ Return exactly this format:
   const raw = completion.choices[0].message.content;
 
   const clean = raw
-    .replace(/```json\s*/i, "")
+    .replace(/```json\s*/gi, "")
     .replace(/```/g, "")
     .trim();
 
@@ -92,55 +96,16 @@ Return exactly this format:
     throw new Error("AI returned an invalid challenge format");
   }
 
- const createChallenge = async (req, res) => {
-  try {
-    const {
-      category,
-      type = "Daily",
-      domain = "General",
-      company = "General",
-    } = req.body;
-
-    if (!category) {
-      return res.status(400).json({
-        success: false,
-        message: "Category is required",
-      });
-    }
-
-    const generatedChallenge = await generateChallenge(
-      category,
-      type,
-      domain,
-      company
-    );
-
-    const challenge = await Challenge.create({
-      title: generatedChallenge.title,
-      description: generatedChallenge.description,
-      category: generatedChallenge.category,
-      domain: generatedChallenge.domain,
-      company: generatedChallenge.company,
-      type: generatedChallenge.frequency,
-      difficulty: generatedChallenge.difficulty,
-      questions: [generatedChallenge.question],
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "AI challenge generated successfully",
-      challenge,
-    });
-  } catch (error) {
-    console.error("Create Challenge Error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate challenge",
-      error: error.message,
-    });
+  // Validate AI response
+  if (
+    !challenge.title ||
+    !challenge.description ||
+    !challenge.question
+  ) {
+    throw new Error("AI returned incomplete challenge data");
   }
-};
+
+  return challenge;
 };
 
 module.exports = {
