@@ -260,21 +260,40 @@ const submitChallengeAnswer = async (req, res) => {
           content: `
 You are an expert interview evaluator.
 
-Evaluate the candidate's answer.
+Evaluate the candidate's answer strictly against the given question.
 
-Return ONLY valid JSON:
+IMPORTANT RULES:
+
+1. First determine the correct answer to the question yourself.
+2. Compare the candidate's answer with the correct answer.
+3. For Aptitude, Mathematics, Logical Reasoning, and quantitative questions:
+   - Calculate the answer yourself before evaluating.
+   - Do NOT assume the candidate is correct.
+   - If the candidate answer is numerically wrong, give a low score.
+4. For Technical questions:
+   - Check whether the answer is technically correct.
+   - Consider important concepts, examples, and reasoning.
+5. For HR questions:
+   - Evaluate relevance, clarity, professionalism, and completeness.
+6. Never give 100 unless the candidate's answer is actually correct and sufficiently complete.
+7. Score must be between 0 and 100.
+8. Give constructive feedback explaining why the answer is correct or incorrect.
+9. Return ONLY valid JSON.
+10. Do not include markdown or code blocks.
+
+Return exactly:
 
 {
   "score": 0,
   "feedback": ""
 }
 
-Rules:
-- Score must be between 0 and 100.
-- Evaluate correctness, relevance, clarity and depth.
-- Give constructive feedback.
-- Do not include markdown.
-          `.trim(),
+Question:
+The question will be provided by the user.
+
+Candidate Answer:
+The candidate's answer will be provided by the user.
+`.trim(),
         },
         {
           role: "user",

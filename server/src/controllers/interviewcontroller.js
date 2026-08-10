@@ -89,7 +89,7 @@ const submitAnswer = async (req, res) => {
       answer,
       domain = "General",
       company = "Startup",
-      questionsAnswered = 0,
+      
     } = req.body;
     if (!sessionId || !answer)
       return res.status(400).json({ message: "Missing required fields" });
@@ -247,7 +247,8 @@ const submitAnswer = async (req, res) => {
       console.log("Evaluation parsing failed:", error.message);
     }
 
-    const isComplete = questionsAnswered >= 2; // complete after 3 questions
+    const isComplete = interview.questionsAnswered >= 2; 
+    
     let overallAnalysis = null;
     // 2️⃣ Save messages to DB
     interview.messages.push({
@@ -352,7 +353,20 @@ const submitAnswer = async (req, res) => {
       }
 
       interview.companyReadiness = companyReadiness;
-      interview.score = score;
+      const answerScores = interview.messages
+        .filter((msg) => msg.role === "user")
+        .map((msg) => msg.score || 0);
+
+      answerScores.push(score);
+
+      const totalScore = answerScores.reduce(
+        (total, value) => total + value,
+        0,
+      );
+
+      const finalScore = Math.round(totalScore / answerScores.length);
+
+      interview.score = finalScore;
       interview.isComplete = true;
 
       interview.feedback = overallAnalysis?.overallFeedback || feedback;
@@ -452,8 +466,9 @@ const submitAnswer = async (req, res) => {
     interview.askedQuestions.push(nextQuestion);
 
     interview.messages.push({
-      role: "ai",
-      content: nextQuestion,
+      role: "user",
+      content: answer,
+      score: score,
       timestamp: new Date(),
     });
 

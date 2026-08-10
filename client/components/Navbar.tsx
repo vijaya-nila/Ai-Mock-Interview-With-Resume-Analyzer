@@ -38,6 +38,7 @@ export function Navbar() {
         { href: "/dashboard", label: "Dashboard", icon: "⚡" },
         { href: "/practice", label: "Practice", icon: "🎯" },
         { href: "/history", label: "My Sessions", icon: "📊" },
+        { href: "/leaderboard", label: "Leaderboard", icon: "🏆" },
         { href: "/profile", label: "Profile", icon: "👤" },
       ]
     : [
