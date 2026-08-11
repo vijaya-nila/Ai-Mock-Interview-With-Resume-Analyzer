@@ -1,5 +1,6 @@
 const Groq = require("groq-sdk");
 const Interview = require("../models/Interview.js");
+const { updateAchievements } = require("../utils/achievement");
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -389,14 +390,14 @@ const submitAnswer = async (req, res) => {
       );
 
       await interview.save();
-
+      const achievements = await updateAchievements(req.userId);
       return res.json({
         sessionId: interview._id,
         score,
         difficulty: currentDifficulty,
         companyReadiness,
         isComplete: true,
-
+        achievements,
         overallFeedback: overallAnalysis?.overallFeedback,
 
         strengths: overallAnalysis?.strengths || [],

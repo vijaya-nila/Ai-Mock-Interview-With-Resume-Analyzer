@@ -8,7 +8,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-
+interface UserAchievements {
+  rank: "Bronze" | "Silver" | "Gold" | "Platinum";
+  badges: string[];
+  streak: {
+    current: number;
+    longest: number;
+    lastInterviewDate: string | null;
+  };
+}
 interface Interview {
   id: string;
   date: string;
@@ -532,6 +540,20 @@ const page = () => {
   const [activeTab, setActiveTab] = useState<"history" | "resume">("history");
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [company, setCompany] = useState("Google");
+  const [achievements, setAchievements] =
+  useState<UserAchievements | null>(null);
+
+  useEffect(() => {
+    setAchievements({
+      rank: "Gold",
+      badges: ["First Interview", "5 Sessions", "High Scorer"],
+      streak: {
+        current: 3,
+        longest: 7,
+        lastInterviewDate: null,
+      },
+    });
+  }, []);
 
   const companies = [
     "Google",
@@ -548,7 +570,10 @@ const page = () => {
   }, [isLoggedIn, authLoading, router]);
 
   useEffect(() => {
-    if (isLoggedIn) fetchInterviews();
+    if (isLoggedIn) {
+      fetchInterviews();
+      fetchAchievements();
+    }
   }, [isLoggedIn]);
   const fetchInterviews = async () => {
     try {
@@ -559,6 +584,14 @@ const page = () => {
       console.error("Failed to fetch interviews:", error);
     } finally {
       setDataLoading(false);
+    }
+  };
+  const fetchAchievements = async () => {
+    try {
+      const { data } = await axiosInstance.get("/api/achievements");
+      setAchievements(data.achievements);
+    } catch (error) {
+      console.error("Failed to fetch achievements:", error);
     }
   };
   const handleSelectDomain = (domain: string) => {
@@ -735,6 +768,46 @@ const page = () => {
               </div>
             </div>
           </Card>
+        )}
+        {achievements && (
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Rank */}
+            <Card className="p-5 border border-border/50">
+              <p className="text-xs text-muted-foreground font-medium mb-2">
+                🏆 Current Rank
+              </p>
+
+              <p className="text-2xl font-black text-primary">
+                {achievements.rank}
+              </p>
+            </Card>
+
+            {/* Streak */}
+            <Card className="p-5 border border-border/50">
+              <p className="text-xs text-muted-foreground font-medium mb-2">
+                🔥 Current Streak
+              </p>
+
+              <p className="text-2xl font-black text-orange-500">
+                {achievements.streak.current} Days
+              </p>
+
+              <p className="text-xs text-muted-foreground mt-1">
+                Longest: {achievements.streak.longest} days
+              </p>
+            </Card>
+
+            {/* Badges */}
+            <Card className="p-5 border border-border/50">
+              <p className="text-xs text-muted-foreground font-medium mb-2">
+                🎖️ Badges Earned
+              </p>
+
+              <p className="text-2xl font-black text-primary">
+                {achievements.badges.length}
+              </p>
+            </Card>
+          </section>
         )}
         <section>
           <div className="flex items-center gap-1 mb-6 border-b border-border/50">
