@@ -7,6 +7,8 @@ const {
   startChallenge,
   submitChallengeAnswer,
   completeChallenge,
+  getChallengeHistory,
+  getChallengeStatistics,
 } = require("../controllers/challengeController");
 
 const { protect } = require("../middleware/auth");
@@ -27,6 +29,12 @@ router.post("/submit", protect, submitChallengeAnswer);
 
 // Complete Challenge
 router.post("/complete", protect, completeChallenge);
+
+// Challenge History
+router.get("/history", protect, getChallengeHistory);
+
+// Challenge Statistics
+router.get("/statistics", protect, getChallengeStatistics);
 
 // Get single challenge
 router.get("/:id", getChallengeById);

@@ -105,6 +105,91 @@ const getChallengeById = async (req, res) => {
     });
   }
 };
+// ======================================================
+// Get Challenge Statistics
+// ======================================================
+const getChallengeStatistics = async (req, res) => {
+  try {
+    const attempts = await ChallengeAttempt.find({
+      userId: req.userId,
+    });
+
+    const completedAttempts = attempts.filter(
+      (attempt) => attempt.isCompleted
+    );
+
+    const totalChallenges = attempts.length;
+    const completedChallenges = completedAttempts.length;
+
+    const scores = completedAttempts.map(
+      (attempt) => attempt.totalScore || 0
+    );
+
+    const averageScore =
+      scores.length > 0
+        ? Math.round(
+            scores.reduce((sum, score) => sum + score, 0) /
+              scores.length
+          )
+        : 0;
+
+    const bestScore =
+      scores.length > 0 ? Math.max(...scores) : 0;
+
+    const completionRate =
+      totalChallenges > 0
+        ? Math.round(
+            (completedChallenges / totalChallenges) * 100
+          )
+        : 0;
+
+    res.status(200).json({
+      success: true,
+      statistics: {
+        totalChallenges,
+        completedChallenges,
+        completionRate,
+        averageScore,
+        bestScore,
+      },
+    });
+  } catch (error) {
+    console.error("Challenge Statistics Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch challenge statistics",
+      error: error.message,
+    });
+  }
+};
+
+// ======================================================
+// Get Challenge History
+// ======================================================
+const getChallengeHistory = async (req, res) => {
+  try {
+    const history = await ChallengeAttempt.find({
+      userId: req.userId,
+      isCompleted: true,
+    })
+      .populate("challengeId", "title category type difficulty")
+      .sort({ completedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      history,
+    });
+  } catch (error) {
+    console.error("Challenge History Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch challenge history",
+      error: error.message,
+    });
+  }
+};
 
 // ======================================================
 // Create a challenge
@@ -442,6 +527,7 @@ const completeChallenge = async (req, res) => {
   }
 };
 
+
 // ======================================================
 // Export Controllers
 // ======================================================
@@ -452,4 +538,6 @@ module.exports = {
   startChallenge,
   submitChallengeAnswer,
   completeChallenge,
+  getChallengeHistory,
+  getChallengeStatistics,
 };
