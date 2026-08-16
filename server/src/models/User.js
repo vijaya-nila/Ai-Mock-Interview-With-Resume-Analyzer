@@ -54,6 +54,19 @@ const userSchema = new mongoose.Schema({
     enum: ["Bronze", "Silver", "Gold", "Platinum"],
     default: "Bronze",
   },
+
+  rankingHistory: [
+    {
+      rank: {
+        type: String,
+        enum: ["Bronze", "Silver", "Gold", "Platinum"],
+      },
+      achievedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 userSchema.pre("save", async function (next) {

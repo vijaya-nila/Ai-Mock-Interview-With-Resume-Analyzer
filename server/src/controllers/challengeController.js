@@ -2,6 +2,7 @@ const Challenge = require("../models/Challenge");
 const ChallengeAttempt = require("../models/ChallengeAttempt");
 const { generateChallenge } = require("../services/challengeService");
 const Groq = require("groq-sdk");
+const User = require("../models/User");
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -164,32 +165,6 @@ const getChallengeStatistics = async (req, res) => {
   }
 };
 
-// ======================================================
-// Get Challenge History
-// ======================================================
-const getChallengeHistory = async (req, res) => {
-  try {
-    const history = await ChallengeAttempt.find({
-      userId: req.userId,
-      isCompleted: true,
-    })
-      .populate("challengeId", "title category type difficulty")
-      .sort({ completedAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      history,
-    });
-  } catch (error) {
-    console.error("Challenge History Error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch challenge history",
-      error: error.message,
-    });
-  }
-};
 
 // ======================================================
 // Create a challenge
@@ -439,15 +414,11 @@ ${answer}
       (total, item) => total + item.score,
       0
     );
-
     attempt.totalScore = Math.round(
       totalScore / attempt.answers.length
     );
-
     attempt.feedback = feedback;
-
     await attempt.save();
-
     res.status(200).json({
       success: true,
       message: "Answer evaluated successfully",
@@ -458,7 +429,6 @@ ${answer}
     });
   } catch (error) {
     console.error("Submit Challenge Answer Error:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to evaluate answer",
@@ -466,9 +436,8 @@ ${answer}
     });
   }
 };
-
 // ======================================================
-// Complete Challenge
+// Complete Challenge + Rank + Badges + Streak
 // ======================================================
 const completeChallenge = async (req, res) => {
   try {
@@ -481,6 +450,7 @@ const completeChallenge = async (req, res) => {
       });
     }
 
+    // Find user's challenge attempt
     const attempt = await ChallengeAttempt.findOne({
       _id: attemptId,
       userId: req.userId,
@@ -500,20 +470,178 @@ const completeChallenge = async (req, res) => {
       });
     }
 
+    // Mark challenge as completed
     attempt.isCompleted = true;
     attempt.completedAt = new Date();
 
     await attempt.save();
 
+    // ==================================================
+    // Get User
+    // ==================================================
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // ==================================================
+    // DAY 4 - RANK SYSTEM
+    // ==================================================
+    const score = attempt.totalScore || 0;
+
+    let newRank = "Bronze";
+
+    if (score >= 90) {
+      newRank = "Platinum";
+    } else if (score >= 75) {
+      newRank = "Gold";
+    } else if (score >= 50) {
+      newRank = "Silver";
+    } else {
+      newRank = "Bronze";
+    }
+
+    user.rank = newRank;
+
+    if (!user.rankingHistory) {
+      user.rankingHistory = [];
+    }
+
+    user.rankingHistory.push({
+      rank: newRank,
+      achievedAt: new Date(),
+    });
+
+    // ==================================================
+    // DAY 4 - BADGE SYSTEM
+    // ==================================================
+
+    if (!user.badges) {
+      user.badges = [];
+    }
+
+    // First Challenge
+    if (!user.badges.includes("First Challenge")) {
+      user.badges.push("First Challenge");
+    }
+
+    // Score based badges
+    if (score >= 90 && !user.badges.includes("90+ Score")) {
+      user.badges.push("90+ Score");
+    }
+
+    if (score === 100 && !user.badges.includes("Perfect Score")) {
+      user.badges.push("Perfect Score");
+    }
+
+    // Rank badges
+    if (newRank === "Silver" && !user.badges.includes("Silver Achiever")) {
+      user.badges.push("Silver Achiever");
+    }
+
+    if (newRank === "Gold" && !user.badges.includes("Gold Achiever")) {
+      user.badges.push("Gold Achiever");
+    }
+
+    if (newRank === "Platinum" && !user.badges.includes("Platinum Achiever")) {
+      user.badges.push("Platinum Achiever");
+    }
+
+    // ==================================================
+    // DAY 4 - STREAK SYSTEM
+    // ==================================================
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (!user.streak) {
+      user.streak = {
+        current: 0,
+        longest: 0,
+        lastInterviewDate: null,
+      };
+    }
+
+    let lastDate = null;
+
+    if (user.streak.lastInterviewDate) {
+      lastDate = new Date(user.streak.lastInterviewDate);
+      lastDate.setHours(0, 0, 0, 0);
+    }
+
+    if (!lastDate) {
+      // First completed challenge
+      user.streak.current = 1;
+    } else {
+      const difference = today.getTime() - lastDate.getTime();
+
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      if (difference === oneDay) {
+        // Completed on consecutive day
+        user.streak.current += 1;
+      } else if (difference > oneDay) {
+        // Streak broken
+        user.streak.current = 1;
+      }
+      // If difference === 0, user already completed today
+    }
+
+    // Update longest streak
+    if (user.streak.current > user.streak.longest) {
+      user.streak.longest = user.streak.current;
+    }
+
+    // Update last challenge date
+    user.streak.lastInterviewDate = new Date();
+
+    // Streak badges
+    if (user.streak.current >= 3 && !user.badges.includes("3 Day Streak")) {
+      user.badges.push("3 Day Streak");
+    }
+
+    if (user.streak.current >= 7 && !user.badges.includes("7 Day Streak")) {
+      user.badges.push("7 Day Streak");
+    }
+
+    if (user.streak.current >= 30 && !user.badges.includes("30 Day Streak")) {
+      user.badges.push("30 Day Streak");
+    }
+
+    // ==================================================
+    // Save User
+    // ==================================================
+
+    await user.save();
+
+    // ==================================================
+    // Final Response
+    // ==================================================
+
     res.status(200).json({
       success: true,
       message: "Challenge completed successfully",
+
       result: {
         attemptId: attempt._id,
         totalScore: attempt.totalScore,
         feedback: attempt.feedback,
+
         isCompleted: attempt.isCompleted,
         completedAt: attempt.completedAt,
+
+        rank: user.rank,
+        badges: user.badges,
+
+        streak: {
+          current: user.streak.current,
+          longest: user.streak.longest,
+          lastInterviewDate: user.streak.lastInterviewDate,
+        },
       },
     });
   } catch (error) {
@@ -526,8 +654,32 @@ const completeChallenge = async (req, res) => {
     });
   }
 };
+// ======================================================
+// Get Challenge History
+// ======================================================
+const getChallengeHistory = async (req, res) => {
+  try {
+    const history = await ChallengeAttempt.find({
+      userId: req.userId,
+      isCompleted: true,
+    })
+      .populate("challengeId")
+      .sort({ completedAt: -1 });
 
+    res.status(200).json({
+      success: true,
+      history,
+    });
+  } catch (error) {
+    console.error("Challenge History Error:", error);
 
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch challenge history",
+      error: error.message,
+    });
+  }
+};
 // ======================================================
 // Export Controllers
 // ======================================================

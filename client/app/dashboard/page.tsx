@@ -46,6 +46,26 @@ interface ResumeAnalysis {
     confidence: number;
   }[];
 }
+interface ChallengeStatistics {
+  totalChallenges: number;
+  completedChallenges: number;
+  completionRate: number;
+  averageScore: number;
+  bestScore: number;
+}
+
+interface ChallengeHistory {
+  _id: string;
+  challengeId: {
+    title: string;
+    category: string;
+    type: string;
+    difficulty: string;
+  };
+  totalScore: number;
+  completedAt: string;
+  isCompleted: boolean;
+}
 
 const INTERVIEW_DOMAINS = [
   {
@@ -537,23 +557,53 @@ const page = () => {
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [filterDomain, setFilterDomain] = useState<String>("All");
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"history" | "resume">("history");
+  const [activeTab, setActiveTab] = useState<"history" | "challenge" | "resume">(
+    "history",
+  );
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
+  // const [challengeHistory, setChallengeHistory] = useState<any[]>([]);
+  const [challengeLoading, setChallengeLoading] = useState(false);
   const [company, setCompany] = useState("Google");
   const [achievements, setAchievements] =
   useState<UserAchievements | null>(null);
+  const [challengeStatistics, setChallengeStatistics] =useState<ChallengeStatistics | null>(null);
 
-  useEffect(() => {
-    setAchievements({
-      rank: "Gold",
-      badges: ["First Interview", "5 Sessions", "High Scorer"],
-      streak: {
-        current: 3,
-        longest: 7,
-        lastInterviewDate: null,
-      },
-    });
-  }, []);
+  const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>(
+    [],
+  );
+
+  const [rankingHistory, setRankingHistory] = useState<
+    { rank: string; achievedAt: string }[]
+  >([]);
+  const fetchChallengeStatistics = async () => {
+    try {
+      const { data } = await axiosInstance.get("/api/challenges/statistics");
+
+      setChallengeStatistics(data.statistics);
+    } catch (error) {
+      console.error("Failed to fetch challenge statistics:", error);
+    }
+  };
+  
+  const fetchRankingHistory = async () => {
+    try {
+      const { data } = await axiosInstance.get("/api/users/ranking-history");
+
+      setRankingHistory(data.rankingHistory || []);
+    } catch (error) {
+      console.error("Failed to fetch ranking history:", error);
+    }
+  };
+  const fetchChallengeHistory = async () => {
+    try {
+      const { data } = await axiosInstance.get("/api/challenges/history");
+
+      setChallengeHistory(data.history || []);
+    } catch (error) {
+      console.error("Failed to fetch challenge history:", error);
+    }
+  };
+  
 
   const companies = [
     "Google",
@@ -570,11 +620,14 @@ const page = () => {
   }, [isLoggedIn, authLoading, router]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchInterviews();
-      fetchAchievements();
-    }
-  }, [isLoggedIn]);
+  if (isLoggedIn) {
+    fetchInterviews();
+    fetchAchievements();
+    fetchChallengeStatistics();
+    fetchChallengeHistory();
+    fetchRankingHistory();
+  }
+}, [isLoggedIn]);
   const fetchInterviews = async () => {
     try {
       setDataLoading(true);
@@ -672,6 +725,15 @@ const page = () => {
               </Button>
             </Link>
 
+            <Link href="/challenges">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                🏆 Challenges
+              </Button>
+            </Link>
+
             <Button
               size="lg"
               onClick={() => setShowDomainSelector(true)}
@@ -746,6 +808,7 @@ const page = () => {
             </Card>
           ))}
         </section>
+
         {recentScores.length >= 2 && (
           <Card className="p-5 border border-border/50">
             <div className="flex items-center justify-between">
@@ -757,8 +820,10 @@ const page = () => {
                   Last {recentScores.length} sessions
                 </p>
               </div>
+
               <div className="flex items-end gap-3">
                 <MiniSparkline scores={recentScores} />
+
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Latest</p>
                   <p className="text-sm font-bold text-primary">
@@ -809,9 +874,124 @@ const page = () => {
             </Card>
           </section>
         )}
+        {/* Challenge Statistics */}
+        {challengeStatistics && (
+          <Card className="p-5 border border-border/50 mt-4">
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-foreground">
+                📊 Challenge Statistics
+              </p>
+
+              <p className="text-xs text-muted-foreground">
+                Your overall challenge performance
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                <p className="text-xs text-muted-foreground">
+                  🎯 Total Challenges
+                </p>
+                <p className="text-xl font-black mt-1">
+                  {challengeStatistics.totalChallenges}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                <p className="text-xs text-muted-foreground">✅ Completed</p>
+                <p className="text-xl font-black mt-1">
+                  {challengeStatistics.completedChallenges}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                <p className="text-xs text-muted-foreground">
+                  📈 Completion Rate
+                </p>
+                <p className="text-xl font-black text-primary mt-1">
+                  {challengeStatistics.completionRate}%
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                <p className="text-xs text-muted-foreground">
+                  📊 Average Score
+                </p>
+                <p className="text-xl font-black text-primary mt-1">
+                  {challengeStatistics.averageScore}%
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
+                <p className="text-xs text-muted-foreground">🏆 Best Score</p>
+                <p className="text-xl font-black text-primary mt-1">
+                  {challengeStatistics.bestScore}%
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
         <section>
+          {/* Ranking History */}
+          {rankingHistory.length > 0 && (
+            <Card className="p-5 border border-border/50">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    📈 Ranking History
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Your rank progression
+                  </p>
+                </div>
+
+                <span className="text-xs font-bold text-primary">
+                  Current: {rankingHistory[rankingHistory.length - 1].rank}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {[...rankingHistory].reverse().map((item, index) => (
+                  <div
+                    key={`${item.rank}-${item.achievedAt}-${index}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">
+                        {item.rank === "Platinum"
+                          ? "💎"
+                          : item.rank === "Gold"
+                            ? "🥇"
+                            : item.rank === "Silver"
+                              ? "🥈"
+                              : "🥉"}
+                      </span>
+
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {item.rank}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          Achieved on{" "}
+                          {new Date(item.achievedAt).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
           <div className="flex items-center gap-1 mb-6 border-b border-border/50">
-            {(["history", "resume"] as const).map((tab) => (
+            {(["history", "challenge", "resume"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -823,7 +1003,9 @@ const page = () => {
               >
                 {tab === "history"
                   ? "📋 Interview History"
-                  : "📄 Resume Analysis"}
+                  : tab === "challenge"
+                    ? "🏆 Challenge History"
+                    : "📄 Resume Analysis"}
               </button>
             ))}
           </div>
@@ -1008,6 +1190,108 @@ const page = () => {
                       </Card>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === "challenge" && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Your completed peer challenges
+                </p>
+              </div>
+
+              {challengeLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="p-5 border border-border/50">
+                      <div className="animate-pulse flex gap-4">
+                        <div className="w-11 h-11 rounded-xl bg-muted" />
+
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-1/3" />
+                          <div className="h-3 bg-muted rounded w-1/2" />
+                        </div>
+
+                        <div className="w-16 h-8 bg-muted rounded-full" />
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : challengeHistory.length === 0 ? (
+                <Card className="p-10 text-center border-2 border-dashed border-border">
+                  <div className="text-5xl mb-4">🏆</div>
+
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    No challenges completed yet
+                  </h3>
+
+                  <p className="text-sm text-muted-foreground">
+                    Complete a peer challenge to see your history here.
+                  </p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {challengeHistory.map((attempt) => (
+                    <Card
+                      key={attempt._id}
+                      className="p-5 border border-border/50 hover:border-primary/40 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-xl">
+                          🏆
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">
+                            {attempt.challengeId?.title || "Challenge"}
+                          </p>
+
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
+                            <span>
+                              📂 {attempt.challengeId?.category || "General"}
+                            </span>
+
+                            <span>
+                              🎯 {attempt.challengeId?.difficulty || "Medium"}
+                            </span>
+
+                            {attempt.completedAt && (
+                              <span>
+                                📅{" "}
+                                {new Date(
+                                  attempt.completedAt,
+                                ).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              attempt.totalScore >= 80
+                                ? "bg-green-500/10 text-green-600"
+                                : attempt.totalScore >= 60
+                                  ? "bg-blue-500/10 text-blue-600"
+                                  : "bg-orange-500/10 text-orange-600"
+                            }`}
+                          >
+                            {attempt.totalScore}%
+                          </span>
+
+                          <span className="text-[10px] text-green-600">
+                            Completed
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               )}
             </div>
