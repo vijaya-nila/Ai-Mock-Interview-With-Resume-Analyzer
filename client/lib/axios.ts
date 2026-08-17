@@ -1,42 +1,53 @@
-import axios from 'axios';
+import axios from "axios";
 
 const axiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    timeout: 15000,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 15000,
 });
 
-// ── Request interceptor — attach token automatically ──────
+// Attach token
 axiosInstance.interceptors.request.use(
-    (config) => {
-        // runs in browser only
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('token');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
 );
 
-// ── Response interceptor — handle 401 globally ────────────
+// Handle response
 axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Clear stale auth data and redirect to login
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-            }
-        }
-        return Promise.reject(error);
+  (response) => response,
+
+  (error) => {
+    console.log("❌ API ERROR:", {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+
+    if (error.response?.status === 401) {
+      console.log("🔴 401 Unauthorized from:", error.config?.url);
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
     }
+
+    return Promise.reject(error);
+  },
 );
 
 export default axiosInstance;

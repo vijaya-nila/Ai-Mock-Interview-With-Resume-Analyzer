@@ -17,16 +17,23 @@ const page = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    try {
-      await login(formData.email, formData.password);
-    } catch (error) {
-      setError("Invalid email or password. Please try again.");
-    }
-  };
+  e.preventDefault();
+
+  console.log("🔥 LOGIN BUTTON CLICKED");
+
+  setError("");
+
+  try {
+    await login(formData.email, formData.password);
+  } catch (error: any) {
+    console.log("LOGIN ERROR:", error);
+    setError(
+      error?.response?.data?.message ||
+        "Login failed. Please try again."
+    );
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary px-4 py-8">
       <div className="w-full max-w-md">
@@ -94,6 +101,7 @@ const page = () => {
 
             <Button
               type="submit"
+              onClick={() => console.log("🔥 BUTTON CLICKED")}
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-semibold rounded-full py-2 mt-6"
             >

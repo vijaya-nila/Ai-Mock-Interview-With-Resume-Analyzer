@@ -82,26 +82,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(
     async (name: string, email: string, password: string) => {
       setIsLoading(true);
+
       try {
-        const { data } = await axiosInstance.post("/api/auth/register", {
+        await axiosInstance.post("/api/auth/register", {
           name,
           email,
           password,
         });
 
-        setToken(data.token);
-        setStoredUser(data.user);
-        setTokenState(data.token);
-        setUser(data.user);
-
-        router.push("/dashboard");
+        // Do NOT login automatically.
+        // User must verify email first.
+        router.push("/login");
       } finally {
         setIsLoading(false);
       }
     },
     [router],
   );
-
   // ── Logout ──────────────────────────────────────────────
   const logout = useCallback(() => {
     clearAuth();
