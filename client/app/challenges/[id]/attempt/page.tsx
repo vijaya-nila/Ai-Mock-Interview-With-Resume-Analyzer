@@ -6,6 +6,17 @@ import axiosInstance from "@/lib/axios";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+interface Challenge {
+  _id?: string;
+  title: string;
+  category: string;
+  type: string;
+  difficulty: string;
+  domain?: string;
+  company?: string;
+  description: string;
+  questions: string[];
+}
 const AttemptPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -14,7 +25,7 @@ const AttemptPage = () => {
   const challengeId = params.id;
   const attemptId = searchParams.get("attemptId");
 
-  const [challenge, setChallenge] = useState(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [question, setQuestion] = useState("");

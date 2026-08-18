@@ -1,21 +1,10 @@
-"use client";
-
-import InterviewContent from "@/components/InterviewContent";
 import React, { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import InterviewContent from "@/components/InterviewContent";
 
 const Page = () => {
-  const searchParams = useSearchParams();
-
-  const domain = searchParams.get("domain") || "";
-  const company = searchParams.get("company") || "";
-
   return (
-    <Suspense fallback={<div>is loading..</div>}>
-      <InterviewContent
-        domain={domain}
-        company={company}
-      />
+    <Suspense fallback={<div>Loading interview...</div>}>
+      <InterviewContent />
     </Suspense>
   );
 };
