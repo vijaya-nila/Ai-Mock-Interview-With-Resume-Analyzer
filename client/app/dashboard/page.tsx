@@ -146,7 +146,7 @@ function ResumePanel({
       );
       console.log("Analysis:", data.analysis);
       setAnalysis(data.analysis);
-      onAnalysisComplete(data.analysis); 
+      onAnalysisComplete(data.analysis);
       setStep("results");
     } catch (error: any) {
       setError(error?.response?.data?.message);
@@ -519,8 +519,22 @@ function ResumePanel({
                 <p className="text-xs font-bold mb-2">💻 Projects</p>
 
                 <ul className="list-disc ml-5 text-xs">
-                  {analysis.projects.map((project) => (
-                    <li key={project}>{project}</li>
+                  {analysis.projects.map((project: any, index: number) => (
+                    <li key={index} className="mb-3">
+                      <p className="font-semibold">{project.name}</p>
+
+                      {project.techStack?.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Tech Stack: {project.techStack.join(", ")}
+                        </p>
+                      )}
+
+                      {project.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {project.description}
+                        </p>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -557,16 +571,20 @@ const page = () => {
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [filterDomain, setFilterDomain] = useState<String>("All");
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"history" | "challenge" | "resume">(
-    "history",
+  const [activeTab, setActiveTab] = useState<
+    "history" | "challenge" | "resume"
+  >("history");
+  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(
+    null,
   );
-  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   // const [challengeHistory, setChallengeHistory] = useState<any[]>([]);
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [company, setCompany] = useState("Google");
-  const [achievements, setAchievements] =
-  useState<UserAchievements | null>(null);
-  const [challengeStatistics, setChallengeStatistics] =useState<ChallengeStatistics | null>(null);
+  const [achievements, setAchievements] = useState<UserAchievements | null>(
+    null,
+  );
+  const [challengeStatistics, setChallengeStatistics] =
+    useState<ChallengeStatistics | null>(null);
 
   const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>(
     [],
@@ -584,7 +602,7 @@ const page = () => {
       console.error("Failed to fetch challenge statistics:", error);
     }
   };
-  
+
   const fetchRankingHistory = async () => {
     try {
       const { data } = await axiosInstance.get("/api/users/ranking-history");
@@ -603,7 +621,6 @@ const page = () => {
       console.error("Failed to fetch challenge history:", error);
     }
   };
-  
 
   const companies = [
     "Google",
@@ -620,14 +637,14 @@ const page = () => {
   }, [isLoggedIn, authLoading, router]);
 
   useEffect(() => {
-  if (isLoggedIn) {
-    fetchInterviews();
-    fetchAchievements();
-    fetchChallengeStatistics();
-    fetchChallengeHistory();
-    fetchRankingHistory();
-  }
-}, [isLoggedIn]);
+    if (isLoggedIn) {
+      fetchInterviews();
+      fetchAchievements();
+      fetchChallengeStatistics();
+      fetchChallengeHistory();
+      fetchRankingHistory();
+    }
+  }, [isLoggedIn]);
   const fetchInterviews = async () => {
     try {
       setDataLoading(true);
@@ -991,7 +1008,7 @@ const page = () => {
             </Card>
           )}
           <div className="flex items-center gap-1 mb-6 border-b border-border/50">
-            {(["history", "challenge", "resume"] as const).map((tab) => (
+            {(["resume", "history", "challenge"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -1001,11 +1018,11 @@ const page = () => {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab === "history"
-                  ? "📋 Interview History"
-                  : tab === "challenge"
-                    ? "🏆 Challenge History"
-                    : "📄 Resume Analysis"}
+                {tab === "resume"
+                  ? "📄 Resume Analysis"
+                  : tab === "history"
+                    ? "📋 Interview History"
+                    : "🏆 Challenge History"}
               </button>
             ))}
           </div>

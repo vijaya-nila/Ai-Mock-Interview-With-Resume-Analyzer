@@ -32,15 +32,47 @@ const ResumeSchema = new mongoose.Schema({
     default: [],
   },
 
-  projects: {
-    type: [String],
-    default: [],
+  projects: [
+  {
+    name: {
+      type: String,
+      default: "",
+    },
+    techStack: {
+      type: [String],
+      default: [],
+    },
+    description: {
+      type: String,
+      default: "",
+    },
   },
+],
 
-  education: {
-    type: [String],
-    default: [],
+education: [
+  {
+    degree: {
+      type: String,
+      default: "",
+    },
+    institution: {
+      type: String,
+      default: "",
+    },
+    period: {
+      type: String,
+      default: "",
+    },
+    cgpa: {
+      type: String,
+      default: "",
+    },
+    percentage: {
+      type: String,
+      default: "",
+    },
   },
+],
 
   certifications: {
     type: [String],

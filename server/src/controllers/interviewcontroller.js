@@ -31,7 +31,8 @@ const startInterview = async (req, res) => {
       });
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      
+      model: "openai/gpt-oss-120b",
       messages: [
         { role: "system", content: systemPrompt(domain, company) },
         {
@@ -119,7 +120,8 @@ const submitAnswer = async (req, res) => {
     // Handle skipped question
     if (answer === "__SKIP__") {
       const skipResponse = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        
+        model: "openai/gpt-oss-120b",
         messages: [
           {
             role: "user",
@@ -170,7 +172,8 @@ const submitAnswer = async (req, res) => {
 
     // 1️⃣ Generate feedback on the answer
     const feedbackResponse = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      
+      model: "openai/gpt-oss-120b",
       messages: [
         {
           role: "user",
@@ -195,7 +198,8 @@ const submitAnswer = async (req, res) => {
 
     // Generate score and difficulty suggestion
     const evaluationResponse = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      // model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [
         {
           role: "user",
@@ -271,7 +275,8 @@ const submitAnswer = async (req, res) => {
         .join("\n");
 
       const analysisResponse = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        
+        model: "openai/gpt-oss-120b",
         messages: [
           {
             role: "user",
@@ -415,7 +420,9 @@ const submitAnswer = async (req, res) => {
 
     // ── Continue path ──────────────────────────────────────
     const nextQuestionResponse = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      
+      model: "openai/gpt-oss-120b",
+
       messages: [
         {
           role: "user",

@@ -28,8 +28,10 @@ async function extractTextFromPDF(buffer) {
 
 // ================= Resume Analyzer =================
 
+
 const analyzeResume = async (req, res) => {
   try {
+    
     if (!req.file) {
       return res.status(400).json({
         error: "No file uploaded",
@@ -109,11 +111,6 @@ Return ONLY this JSON:
     "",
     ""
   ],
-  "recommendations": [
-  "",
-  "",
-  ""
-],
 
 "roadmap": {
   "technologies": [
@@ -141,7 +138,8 @@ Return ONLY this JSON:
 `;
 
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      // model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [
         {
           role: "user",
@@ -189,7 +187,6 @@ Return ONLY this JSON:
       certifications: analysis.certifications || [],
       missingSkills: analysis.missingSkills || [],
       placementReadiness: analysis.placementReadiness || 0,
-      recommendations: analysis.recommendations || [],
       roadmap: analysis.roadmap || {
         technologies: [],
         projects: [],
@@ -202,8 +199,10 @@ Return ONLY this JSON:
       analysis,
     });
   } catch (error) {
-    console.error("Error analyzing resume:", error);
-
+    // console.error("Error analyzing resume:", error);
+    console.error("❌ ERROR ANALYZING RESUME");
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
     return res.status(500).json({
       error: error.message,
     });
