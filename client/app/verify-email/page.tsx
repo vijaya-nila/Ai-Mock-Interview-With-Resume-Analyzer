@@ -18,9 +18,9 @@ export default function VerifyEmailPage() {
           return;
         }
 
-        const response = await fetch(
-          `http://localhost:5000/api/auth/verify-email?token=${encodeURIComponent(token)}`
-        );
+       const response = await fetch(
+         `https://ai-mock-interview-with-resume-analyzer.onrender.com/api/auth/verify-email?token=${encodeURIComponent(token)}`,
+       );
 
         const data = await response.json();
 
