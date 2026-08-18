@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
         }
 
        const response = await fetch(
-         `https://ai-mock-interview-with-resume-analyzer.onrender.com/api/auth/verify-email?token=${encodeURIComponent(token)}`,
+         `https://ai-mock-interview-with-resume-analyzer-1.onrender.com/api/auth/verify-email?token=${encodeURIComponent(token)}`,
        );
 
         const data = await response.json();
