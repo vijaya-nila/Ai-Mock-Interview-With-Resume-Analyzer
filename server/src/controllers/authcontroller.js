@@ -1,7 +1,10 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User.js");
-const { sendVerificationEmail } = require("../utils/emailService.js");
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} = require("../utils/emailService.js");
 
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -259,7 +262,155 @@ const login = async (req, res) => {
     });
   }
 };
+// ======================================================
+// Forgot Password
+// ======================================================
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    // Don't reveal whether an account exists
+    if (!user) {
+      return res.status(200).json({
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      });
+    }
+
+    // Generate secure random token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Store HASHED token in database
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Token expires in 15 minutes
+    const resetExpires = new Date(
+      Date.now() + 15 * 60 * 1000
+    );
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires = resetExpires;
+
+    await user.save();
+
+    // Send reset email
+    try {
+      await sendPasswordResetEmail(
+        user.email,
+        resetToken
+      );
+    } catch (emailError) {
+      console.error(
+        "Password Reset Email Error:",
+        emailError.message
+      );
+
+      // Remove reset token if email failed
+      user.passwordResetToken = null;
+      user.passwordResetExpires = null;
+
+      await user.save();
+
+      return res.status(500).json({
+        message:
+          "Password reset email could not be sent",
+      });
+    }
+
+    return res.status(200).json({
+      message:
+        "If an account exists with this email, a password reset link has been sent.",
+    });
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
+// ======================================================
+// Reset Password
+// ======================================================
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        message: "Token and new password are required",
+      });
+    }
+
+    // Password strength validation
+    const passwordErrors = validatePassword(password);
+
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({
+        message: "Password does not meet security requirements",
+        errors: passwordErrors,
+      });
+    }
+
+    // Hash token received from frontend
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Find user with valid token
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: {
+        $gt: new Date(),
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message:
+          "Invalid or expired password reset token",
+      });
+    }
+
+    // Update password
+    user.password = password;
+
+    // Invalidate token immediately
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      message:
+        "Password reset successful. You can now log in with your new password.",
+    });
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 // ======================================================
 // Get Current User
 // ======================================================
@@ -293,4 +444,6 @@ module.exports = {
   login,
   getMe,
   verifyEmail,
+  forgotPassword,
+  resetPassword,
 };

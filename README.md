@@ -59,7 +59,7 @@ AI conducts a structured interview:
 
 **AI Layer**
 - 🚀 Groq AI API
-- Model: `llama3-70b-8192`
+- Model: `openai/gpt-oss-120b`
 - Prompt Engineering System
 
 **Utilities**

@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const page = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -87,18 +90,36 @@ const page = () => {
               >
                 Password
               </label>
-              <Input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                required
-                className="rounded-lg"
-              />
-            </div>
 
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  className="rounded-lg pr-10"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-end mt-2">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-primary font-semibold hover:underline"
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <Button
               type="submit"
               onClick={() => console.log("🔥 BUTTON CLICKED")}

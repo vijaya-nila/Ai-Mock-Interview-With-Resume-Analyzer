@@ -58,6 +58,52 @@ const sendVerificationEmail = async (email, token) => {
   });
 };
 
+const sendPasswordResetEmail = async (email, token) => {
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+
+  await transporter.sendMail({
+    from: `"AI Assistant" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Reset Your Password",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <h2>Password Reset Request</h2>
+
+          <p>
+            We received a request to reset your password.
+          </p>
+
+          <p>
+            <a
+              href="${resetUrl}"
+              style="
+                display: inline-block;
+                padding: 12px 20px;
+                background-color: #007bff;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+              "
+            >
+              Reset Password
+            </a>
+          </p>
+
+          <p>
+            This password reset link will expire in 15 minutes.
+          </p>
+
+          <p>
+            If you did not request a password reset, you can safely ignore this email.
+          </p>
+        </body>
+      </html>
+    `,
+  });
+};
 module.exports = {
   sendVerificationEmail,
+  sendPasswordResetEmail,
 };

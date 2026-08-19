@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     unique: true,
   },
+
   emailVerified: {
     type: Boolean,
     default: false,
@@ -28,10 +29,22 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+
+  // Day 2 - Password Reset
+  passwordResetToken: {
+    type: String,
+    default: null,
+  },
+
+  passwordResetExpires: {
+    type: Date,
+    default: null,
+  },
+
   password: {
     type: String,
     required: true,
-    minlength: 6,
+    minlength: 8,
   },
 
   createdAt: {
@@ -51,10 +64,12 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 0,
     },
+
     longest: {
       type: Number,
       default: 0,
     },
+
     lastInterviewDate: {
       type: Date,
       default: null,
@@ -74,6 +89,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["Bronze", "Silver", "Gold", "Platinum"],
       },
+
       achievedAt: {
         type: Date,
         default: Date.now,
