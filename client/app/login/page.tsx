@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
-import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-
+import React, { useEffect, useRef, useState } from "react";
 
 const page = () => {
+  const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -27,14 +27,16 @@ const page = () => {
 
   setError("");
 
-  try {
+   try {
     await login(formData.email, formData.password);
   } catch (error: any) {
     console.log("LOGIN ERROR:", error);
-    setError(
+
+    const message =
       error?.response?.data?.message ||
-        "Login failed. Please try again."
-    );
+     "Login failed. Please try again.";
+
+    setError(message);
   }
 };
   return (

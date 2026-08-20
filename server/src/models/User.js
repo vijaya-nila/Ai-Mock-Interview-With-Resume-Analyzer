@@ -46,6 +46,16 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 8,
   },
+  // Day 3 - Account Lockout
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+
+  lockUntil: {
+    type: Date,
+    default: null,
+  },
 
   createdAt: {
     type: Date,

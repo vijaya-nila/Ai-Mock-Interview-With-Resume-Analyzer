@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User.js");
+const LoginHistory = require("../models/LoginHistory.js");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -220,6 +221,27 @@ const login = async (req, res) => {
       });
     }
 
+    // ======================================================
+    // Account Lock Check
+    // ======================================================
+
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      const remainingMinutes = Math.ceil(
+        (user.lockUntil - new Date()) / (1000 * 60)
+      );
+
+      return res.status(423).json({
+        message: `Account temporarily locked. Please try again in ${remainingMinutes} minute(s).`,
+      });
+    }
+
+    // If lock period has expired, reset lock state
+    if (user.lockUntil && user.lockUntil <= new Date()) {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
+    }
+
     console.log("User email:", user.email);
     console.log("Email verified:", user.emailVerified);
 
@@ -227,17 +249,79 @@ const login = async (req, res) => {
 
     console.log("Password match:", passwordMatch);
 
+    // ======================================================
+    // Failed Login
+    // ======================================================
+
     if (!passwordMatch) {
+      user.failedLoginAttempts += 1;
+
+      const MAX_FAILED_ATTEMPTS = 4;
+      const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
+
+      let message = "Incorrect password.";
+
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.lockUntil = new Date(Date.now() + LOCK_TIME);
+
+        message =
+          "Too many failed login attempts. Your account has been temporarily locked for 15 minutes.";
+      } else {
+        const attemptsRemaining =
+          MAX_FAILED_ATTEMPTS - user.failedLoginAttempts;
+
+        message = `Incorrect password. ${attemptsRemaining} attempt(s) remaining.`;
+      }
+
+      await user.save();
+
+      // Save failed login history
+      await LoginHistory.create({
+        user: user._id,
+        status: "failure",
+        timestamp: new Date(),
+        device: req.headers["user-agent"] || "Unknown",
+        ipAddress:
+          req.headers["x-forwarded-for"] ||
+          req.socket.remoteAddress ||
+          "Unknown",
+      });
+
       return res.status(401).json({
-        message: "Incorrect password.",
+        message,
       });
     }
+
+    // ======================================================
+    // Email Verification Check
+    // ======================================================
 
     if (!user.emailVerified) {
       return res.status(403).json({
         message: "Please verify your email before logging in.",
       });
     }
+
+    // ======================================================
+    // Successful Login
+    // ======================================================
+
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+
+    await user.save();
+
+    // Save successful login history
+    await LoginHistory.create({
+      user: user._id,
+      status: "success",
+      timestamp: new Date(),
+      device: req.headers["user-agent"] || "Unknown",
+      ipAddress:
+        req.headers["x-forwarded-for"] ||
+        req.socket.remoteAddress ||
+        "Unknown",
+    });
 
     const token = signToken(user._id.toString());
 
