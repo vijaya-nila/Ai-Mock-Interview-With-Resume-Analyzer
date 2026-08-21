@@ -2,13 +2,14 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User.js");
 const LoginHistory = require("../models/LoginHistory.js");
+const Session = require("../models/Session.js");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } = require("../utils/emailService.js");
 
-const signToken = (userId) =>
-  jwt.sign({ userId }, process.env.JWT_SECRET, {
+const signToken = (userId, sessionId) =>
+  jwt.sign({ userId, sessionId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
@@ -323,7 +324,36 @@ const login = async (req, res) => {
         "Unknown",
     });
 
-    const token = signToken(user._id.toString());
+    // ======================================================
+// Duplicate Session Prevention
+// Only one active session per user
+// ======================================================
+
+await Session.updateMany(
+  {
+    user: user._id,
+    status: "active",
+  },
+  {
+    $set: {
+      status: "terminated",
+      terminatedAt: new Date(),
+    },
+  },
+);
+
+// Create new session
+const sessionId = crypto.randomUUID();
+
+await Session.create({
+  user: user._id,
+  sessionId,
+  deviceInfo: req.headers["user-agent"] || "Unknown",
+  ipAddress:
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "Unknown",
+  status: "active",
+});
+    const token = signToken(user._id.toString(), sessionId);
 
     console.log("✅ LOGIN SUCCESS");
 
@@ -521,11 +551,55 @@ const getMe = async (req, res) => {
 };
 
 // ======================================================
+// Logout
+// ======================================================
+
+const logout = async (req, res) => {
+  try {
+    const { sessionId } = req;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        message: "Session ID not found",
+      });
+    }
+
+    const session = await Session.findOne({
+      sessionId,
+      user: req.userId,
+      status: "active",
+    });
+
+    if (!session) {
+      return res.status(404).json({
+        message: "Active session not found",
+      });
+    }
+
+    session.status = "terminated";
+    session.terminatedAt = new Date();
+
+    await session.save();
+
+    return res.status(200).json({
+      message: "Logout successful",
+    });
+  } catch (err) {
+    console.error("Logout Error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+// ======================================================
 // Export
 // ======================================================
 module.exports = {
   register,
   login,
+  logout,
   getMe,
   verifyEmail,
   forgotPassword,
