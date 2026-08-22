@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const User = require("../models/User.js");
 const LoginHistory = require("../models/LoginHistory.js");
 const Session = require("../models/Session.js");
+const SecurityAlert = require("../models/SecurityAlert.js");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -131,7 +132,6 @@ const register = async (req, res) => {
 
     res.status(500).json({
       message: "Server error",
-      error: err.message,
     });
   }
 };
@@ -197,8 +197,8 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     console.log("========== LOGIN ==========");
-    console.log("Email received:", email);
-    console.log("Password received:", password ? "YES" : "NO");
+    // console.log("Email received:", email);
+    // console.log("Password received:", password ? "YES" : "NO");
 
     if (!email || !password) {
       return res.status(400).json({
@@ -208,13 +208,13 @@ const login = async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    console.log("Normalized email:", normalizedEmail);
+    // console.log("Normalized email:", normalizedEmail);
 
     const user = await User.findOne({
       email: normalizedEmail,
     });
 
-    console.log("User found:", !!user);
+    // console.log("User found:", !!user);
 
     if (!user) {
       return res.status(401).json({
@@ -243,12 +243,12 @@ const login = async (req, res) => {
       await user.save();
     }
 
-    console.log("User email:", user.email);
-    console.log("Email verified:", user.emailVerified);
+    // console.log("User email:", user.email);
+    // console.log("Email verified:", user.emailVerified);
 
     const passwordMatch = await user.comparePassword(password);
 
-    console.log("Password match:", passwordMatch);
+    // console.log("Password match:", passwordMatch);
 
     // ======================================================
     // Failed Login
@@ -267,6 +267,20 @@ const login = async (req, res) => {
 
         message =
           "Too many failed login attempts. Your account has been temporarily locked for 15 minutes.";
+
+        // Create security alert
+        await SecurityAlert.create({
+          user: user._id,
+          type: "account_locked",
+          message:
+            "Multiple failed login attempts detected. Account temporarily locked.",
+          severity: "high",
+          ipAddress:
+            req.headers["x-forwarded-for"] ||
+            req.socket.remoteAddress ||
+            "Unknown",
+          deviceInfo: req.headers["user-agent"] || "Unknown",
+        });
       } else {
         const attemptsRemaining =
           MAX_FAILED_ATTEMPTS - user.failedLoginAttempts;
@@ -372,7 +386,6 @@ await Session.create({
 
     return res.status(500).json({
       message: "Server error",
-      error: err.message,
     });
   }
 };

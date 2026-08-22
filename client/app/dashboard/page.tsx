@@ -144,7 +144,7 @@ function ResumePanel({
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
-      console.log("Analysis:", data.analysis);
+      
       setAnalysis(data.analysis);
       onAnalysisComplete(data.analysis);
       setStep("results");
@@ -651,7 +651,7 @@ const page = () => {
       const { data } = await axiosInstance.get("/api/interviews");
       setIntervies(data.interviews || []);
     } catch (error) {
-      console.error("Failed to fetch interviews:", error);
+      console.error("Failed to fetch interviews");
     } finally {
       setDataLoading(false);
     }

@@ -34,6 +34,80 @@ const getRankingHistory = async (req, res) => {
   }
 };
 
+
+// ======================================================
+// Change Password
+// ======================================================
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    // Validate new password length
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters long",
+      });
+    }
+
+    // Get current user
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isPasswordCorrect = await user.comparePassword(currentPassword);
+
+    if (!isPasswordCorrect) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Prevent using the same password
+    const isSamePassword = await user.comparePassword(newPassword);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be different from current password",
+      });
+    }
+
+    // Set new password
+    // User model pre-save hook will hash it automatically
+    user.password = newPassword;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to change password",
+    });
+  }
+};
 // ======================================================
 // Get User Profile
 // ======================================================
@@ -260,4 +334,5 @@ const getProfile = async (req, res) => {
 module.exports = {
   getProfile,
   getRankingHistory,
+    changePassword,
 };
