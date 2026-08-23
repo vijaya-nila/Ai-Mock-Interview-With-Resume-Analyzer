@@ -12,6 +12,7 @@ const {
 } = require("../controllers/challengeController");
 
 const { protect } = require("../middleware/auth");
+const { requireRole } = require("../middleware/authorize");
 
 const router = express.Router();
 
@@ -19,7 +20,12 @@ const router = express.Router();
 router.get("/", getChallenges);
 
 // Create new challenge
-router.post("/", createChallenge);
+router.post(
+  "/",
+  protect,
+  requireRole("Mentor", "Administrator"),
+  createChallenge
+);
 
 // Start Challenge
 router.post("/start", protect, startChallenge);

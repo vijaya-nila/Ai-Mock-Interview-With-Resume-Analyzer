@@ -125,6 +125,7 @@ const register = async (req, res) => {
         name: user.name,
         email: user.email,
         emailVerified: user.emailVerified,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -379,6 +380,7 @@ await Session.create({
         name: user.name,
         email: user.email,
         emailVerified: user.emailVerified,
+        role: user.role,
       },
     });
   } catch (err) {

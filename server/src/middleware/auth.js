@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Session = require("../models/Session.js");
+const User = require("../models/User.js");
 
 const protect = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -42,6 +43,18 @@ const protect = async (req, res, next) => {
     session.lastActiveAt = new Date();
     await session.save();
 
+    // Get authenticated user
+    const user = await User.findById(decoded.userId).select(
+      "-password -emailVerificationToken -passwordResetToken"
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found",
+      });
+    }
+
+    req.user = user;
     req.userId = decoded.userId;
     req.sessionId = decoded.sessionId;
 

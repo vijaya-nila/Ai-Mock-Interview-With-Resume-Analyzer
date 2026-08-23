@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
 
+  role: {
+    type: String,
+    enum: ["Student", "Mentor", "Administrator"],
+    default: "Student",
+  },
+
   emailVerificationToken: {
     type: String,
     default: null,
