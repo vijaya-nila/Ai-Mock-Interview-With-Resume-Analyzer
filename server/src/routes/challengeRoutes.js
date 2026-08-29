@@ -15,11 +15,14 @@ const { protect } = require("../middleware/auth");
 const { requireRole } = require("../middleware/authorize");
 
 const router = express.Router();
-
 // Get all challenges
-router.get("/", getChallenges);
+router.get(
+  "/",
+  protect,
+  getChallenges
+);
 
-// Create new challenge
+// Create new challenge - Mentor / Administrator
 router.post(
   "/",
   protect,
@@ -27,22 +30,50 @@ router.post(
   createChallenge
 );
 
-// Start Challenge
-router.post("/start", protect, startChallenge);
+// Challenge History - Student
+router.get(
+  "/history",
+  protect,
+  requireRole("Student"),
+  getChallengeHistory
+);
 
-// Submit and Evaluate Answer
-router.post("/submit", protect, submitChallengeAnswer);
-
-// Complete Challenge
-router.post("/complete", protect, completeChallenge);
-
-// Challenge History
-router.get("/history", protect, getChallengeHistory);
-
-// Challenge Statistics
-router.get("/statistics", protect, getChallengeStatistics);
+// Challenge Statistics - Student
+router.get(
+  "/statistics",
+  protect,
+  requireRole("Student"),
+  getChallengeStatistics
+);
 
 // Get single challenge
-router.get("/:id", getChallengeById);
+router.get(
+  "/:id",
+  protect,
+  getChallengeById
+);
 
+// Start Challenge - Student
+router.post(
+  "/start",
+  protect,
+  requireRole("Student"),
+  startChallenge
+);
+
+// Submit Challenge Answer - Student
+router.post(
+  "/submit",
+  protect,
+  requireRole("Student"),
+  submitChallengeAnswer
+);
+
+// Complete Challenge - Student
+router.post(
+  "/complete",
+  protect,
+  requireRole("Student"),
+  completeChallenge
+);
 module.exports = router;

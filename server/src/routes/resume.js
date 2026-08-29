@@ -1,6 +1,7 @@
 const express = require("express");
 const { protect } = require("../middleware/auth.js");
 const multer=require("multer");
+
 const {
   analyzeResume,
   getCandidateProfile,
@@ -20,7 +21,22 @@ const upload=multer({
         }
     }
 });
-router.post("/analyze", protect, upload.single("resume"), analyzeResume);
-router.get("/candidate-profile", protect, getCandidateProfile);
-router.get("/history", protect, getHistory);
+
+const { requireRole } = require("../middleware/authorize.js");
+router.post(
+  "/analyze",
+  protect,
+  requireRole("Student"),
+  upload.single("resume"),
+  analyzeResume,
+);
+
+router.get(
+  "/candidate-profile",
+  protect,
+  requireRole("Student"),
+  getCandidateProfile,
+);
+
+router.get("/history", protect, requireRole("Student"), getHistory);
 module.exports = router;

@@ -1,7 +1,6 @@
 import { AuthContext } from "@/context/Authcontext";
 import React from "react";
 
-
 export function useAuth() {
     const context = React.useContext(AuthContext);
     if (!context) {

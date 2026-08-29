@@ -1,9 +1,31 @@
 const mongoose = require("mongoose");
 
+// const MessageSchema = new mongoose.Schema({
+//   role: { type: String, enum: ["ai", "user"], required: true },
+//   content: { type: String, required: true },
+//   timestamp: { type: Date, default: Date.now },
+// });
 const MessageSchema = new mongoose.Schema({
-  role: { type: String, enum: ["ai", "user"], required: true },
-  content: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
+  role: {
+    type: String,
+    enum: ["ai", "user"],
+    required: true,
+  },
+
+  content: {
+    type: String,
+    required: true,
+  },
+
+  score: {
+    type: Number,
+    default: null,
+  },
+
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 
@@ -58,6 +80,20 @@ const InterviewSchema = new mongoose.Schema({
   messages: [MessageSchema],
 
   feedback: { type: String, default: "" },
+  mentorFeedback: {
+    type: String,
+    default: "",
+  },
+
+  mentorFeedbackSent: {
+    type: Boolean,
+    default: false,
+  },
+
+  mentorFeedbackSentAt: {
+    type: Date,
+    default: null,
+  },
 
   strengths: {
     type: [String],

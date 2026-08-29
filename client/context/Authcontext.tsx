@@ -70,7 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTokenState(data.token);
         setUser(data.user);
 
-        router.push("/dashboard");
+        if (data.user.role === "Administrator") {
+          router.push("/admin");
+        } else if (data.user.role === "Mentor") {
+          router.push("/mentor");
+        } else {
+          router.push("/dashboard");
+        }
       } finally {
         setIsLoading(false);
       }

@@ -13,6 +13,20 @@ interface Interview {
   score: number;
   duration: number;
   topic: string;
+  company?: string;
+  difficulty?: string;
+
+  // AI feedback
+  feedback?: string;
+
+  // Mentor feedback
+  mentorFeedback?: string;
+  mentorFeedbackSent?: boolean;
+  mentorFeedbackSentAt?: string;
+
+  strengths?: string[];
+  weaknesses?: string[];
+  improvements?: string[];
 }
 
 const INTERVIEW_DOMAINS = [
@@ -237,17 +251,22 @@ export default function HistoryPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-semibold text-foreground text-sm truncate">{interview.topic}</p>
+                          <p className="font-semibold text-foreground text-sm truncate">
+                            {interview.topic}
+                          </p>
                           <ScoreBadge score={interview.score} />
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                           <span>
                             📅{" "}
-                            {new Date(interview.date).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {new Date(interview.date).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
                           </span>
                           <span>⏱ {interview.duration} min</span>
                         </div>
@@ -260,18 +279,79 @@ export default function HistoryPage() {
                             style={{ width: `${interview.score}%` }}
                           />
                         </div>
-                        <p className="text-xs font-semibold text-foreground">{interview.score}%</p>
+                        <p className="text-xs font-semibold text-foreground">
+                          {interview.score}%
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Button
                           size="sm"
                           className="rounded-full text-xs bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white"
-                          onClick={() => router.push(`/interview?domain=${encodeURIComponent(interview.topic)}`)}
+                          onClick={() =>
+                            router.push(
+                              `/interview?domain=${encodeURIComponent(interview.topic)}`,
+                            )
+                          }
                         >
                           Retake
                         </Button>
                       </div>
                     </div>
+                    {/* AI Feedback */}
+                    {interview.feedback && interview.feedback.trim() !== "" && (
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">🤖</span>
+                            <h4 className="font-semibold text-sm text-foreground">
+                              AI Feedback
+                            </h4>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {interview.feedback}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mentor Feedback */}
+                    {interview.mentorFeedbackSent &&
+                      interview.mentorFeedback &&
+                      interview.mentorFeedback.trim() !== "" && (
+                        <div className="mt-3">
+                          <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">💬</span>
+
+                              <h4 className="font-semibold text-sm text-foreground">
+                                Mentor Feedback
+                              </h4>
+
+                              <span className="ml-auto text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                                Received
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {interview.mentorFeedback}
+                            </p>
+
+                            {interview.mentorFeedbackSentAt && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Sent on{" "}
+                                {new Date(
+                                  interview.mentorFeedbackSentAt,
+                                ).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </Card>
                 );
               })}

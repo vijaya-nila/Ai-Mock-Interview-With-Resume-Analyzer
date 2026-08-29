@@ -1152,11 +1152,6 @@ const page = () => {
                               </span>
                               <span>⏱ {interview.duration} min</span>
                             </div>
-                            {interview.feedback && (
-                              <p className="mt-2 text-xs text-muted-foreground italic">
-                                💬 {interview.feedback}
-                              </p>
-                            )}
                           </div>
                           <div className="hidden md:flex flex-col items-end gap-1 w-28">
                             <p className="text-xs text-muted-foreground">

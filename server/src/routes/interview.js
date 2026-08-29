@@ -6,14 +6,16 @@ const {
   getInterview,
 } = require("../controllers/interviewcontroller.js");
 const { protect } = require("../middleware/auth.js");
-
 const router = express.Router();
-
 router.use(protect); // all routes require auth
 
-router.post("/start", startInterview);
-router.post("/submit-answer", submitAnswer);
-router.get("/", getInterviews);
-router.get("/:id", getInterview);
+const { requireRole } = require("../middleware/authorize.js");
 
+router.post("/start", requireRole("Student"), startInterview);
+
+router.post("/submit-answer", requireRole("Student"), submitAnswer);
+
+router.get("/", requireRole("Student"), getInterviews);
+
+router.get("/:id", requireRole("Student"), getInterview);
 module.exports = router;

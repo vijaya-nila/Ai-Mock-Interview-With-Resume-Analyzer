@@ -11,6 +11,10 @@ const placementRoutes = require("./routes/placement.js");
 const challengeRoutes = require("./routes/challengeRoutes.js");
 const leaderboardRoutes = require("./routes/leaderboard.js");
 const achievementsRoutes = require("./routes/achievements.js");
+const mentorRoutes = require("./routes/mentor.js");
+const adminRoutes = require("./routes/adminRoutes.js");
+const activityRoutes = require("./routes/activityRoutes.js");
+
 
 connectDB();
 const app = express();
@@ -29,6 +33,9 @@ app.use("/api/placement", placementRoutes);
 app.use("/api/challenges", challengeRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/achievements", achievementsRoutes);
+app.use("/api/mentor", mentorRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/activity", activityRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {

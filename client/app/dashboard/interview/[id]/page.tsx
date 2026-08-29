@@ -21,6 +21,12 @@ interface Interview {
   score: number;
   duration: number;
   feedback: string;
+
+  // Mentor feedback
+  mentorFeedback?: string;
+  mentorFeedbackSent?: boolean;
+  mentorFeedbackSentAt?: string;
+
   strengths: string[];
   weaknesses: string[];
   improvements: string[];
@@ -240,7 +246,43 @@ const Page = () => {
           </p>
         </div>
       </Card>
+      {/* Mentor Feedback */}
+      <Card className="p-6 border-l-4 border-purple-500">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-2xl">
+            👨‍🏫
+          </div>
 
+          <div>
+            <h2 className="text-xl font-bold">Mentor Feedback</h2>
+
+            <p className="text-sm text-muted-foreground">
+              Feedback provided by your mentor
+            </p>
+          </div>
+        </div>
+
+        {interview.mentorFeedback?.trim() ? (
+          <div className="bg-muted/40 rounded-xl p-5">
+            <p className="leading-8 text-muted-foreground whitespace-pre-wrap">
+              {interview.mentorFeedback}
+            </p>
+
+            {interview.mentorFeedbackSentAt && (
+              <p className="text-xs text-muted-foreground mt-4">
+                Sent on:{" "}
+                {new Date(interview.mentorFeedbackSentAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="bg-muted/40 rounded-xl p-5">
+            <p className="text-sm text-muted-foreground">
+              Your mentor has not provided feedback for this interview yet.
+            </p>
+          </div>
+        )}
+      </Card>
       {/* Strengths */}
 
       <Card className="p-6">

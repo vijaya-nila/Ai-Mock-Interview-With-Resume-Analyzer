@@ -504,19 +504,29 @@ const getInterviews = async (req, res) => {
       userId: req.userId,
       isComplete: true,
     })
-      .select("domain company difficulty score duration questionsAnswered createdAt")
+      .select(
+        "domain company difficulty score duration questionsAnswered createdAt feedback strengths weaknesses improvements mentorFeedback mentorFeedbackSent mentorFeedbackSentAt",
+      )
       .sort({ createdAt: -1 });
 
-    const mapped = interviews.map((i) => ({
-      id: i._id,
-      topic: i.domain,
-      company: i.company,
-      difficulty: i.difficulty,
-      score: i.score,
-      duration: i.duration,
-      questionsAnswered: i.questionsAnswered,
-      date: i.createdAt,
-    }));
+     const mapped = interviews.map((i) => ({
+       id: i._id,
+       topic: i.domain,
+       company: i.company,
+       difficulty: i.difficulty,
+       score: i.score,
+       duration: i.duration,
+       questionsAnswered: i.questionsAnswered,
+       date: i.createdAt,
+
+       // AI feedback
+       feedback: i.feedback,
+
+       // Mentor feedback
+       mentorFeedback: i.mentorFeedback,
+       mentorFeedbackSent: i.mentorFeedbackSent,
+       mentorFeedbackSentAt: i.mentorFeedbackSentAt,
+     }));
     res.json({ interviews: mapped });
   } catch (err) {
     res.status(500).json({
