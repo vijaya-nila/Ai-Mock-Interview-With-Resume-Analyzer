@@ -531,6 +531,40 @@ const InterviewContent = () => {
           </>
         )}
       </div>
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <Card className="w-[90%] max-w-md p-6 shadow-2xl">
+            <div className="text-center">
+              <div className="text-4xl mb-4">⚠️</div>
+
+              <h2 className="text-xl font-bold mb-2">Stop Interview?</h2>
+
+              <p className="text-sm text-muted-foreground mb-6">
+                Are you sure you want to stop this interview? Your current
+                progress may be lost.
+              </p>
+
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowExitConfirm(false)}
+                  className="flex-1 rounded-full"
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  onClick={handleEndInterview}
+                  className="flex-1 rounded-full"
+                >
+                  Stop Interview
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
