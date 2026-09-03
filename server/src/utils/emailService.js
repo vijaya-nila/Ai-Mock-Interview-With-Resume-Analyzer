@@ -1,13 +1,14 @@
 const nodemailer = require("nodemailer");
 const dns = require("dns");
 
-// Render environment-ல் Gmail SMTP IPv6-க்கு போகாமல் IPv4-ஐ முதலில் பயன்படுத்தும்
 dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
+
+  family: 4,
 
   auth: {
     user: process.env.EMAIL_USER,
