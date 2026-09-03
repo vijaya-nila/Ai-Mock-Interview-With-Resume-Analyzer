@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const connectDB = require("./config/db.js");
 require("dotenv").config();
+console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
 const authRoutes = require("./routes/auth.js");
 const interviewRoutes = require("./routes/interview.js");
 const resumeRoutes = require("./routes/resume.js");
