@@ -1,46 +1,33 @@
 const nodemailer = require("nodemailer");
-const dns = require("dns");
 
-dns.setDefaultResultOrder("ipv4first");
-
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+//   tls: {
+//     rejectUnauthorized: false,
+//   },
+// });
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-
-  family: 4,
-
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 
-  tls: {
-    rejectUnauthorized: false,
-  },
 });
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ SMTP CONNECTION ERROR:", error.message);
-  } else {
-    console.log("✅ SMTP SERVER IS READY");
-  }
-});
-
-// ==============================
-// SEND VERIFICATION EMAIL
-// ==============================
 const sendVerificationEmail = async (email, token) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(
-    token
-  )}`;
+  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
 
   await transporter.sendMail({
     from: `"AI Assistant" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify Your Email",
-
     html: `
       <!DOCTYPE html>
       <html>
@@ -81,19 +68,13 @@ const sendVerificationEmail = async (email, token) => {
   });
 };
 
-// ==============================
-// SEND PASSWORD RESET EMAIL
-// ==============================
 const sendPasswordResetEmail = async (email, token) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
-    token
-  )}`;
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
 
   await transporter.sendMail({
     from: `"AI Assistant" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Reset Your Password",
-
     html: `
       <!DOCTYPE html>
       <html>
@@ -125,14 +106,13 @@ const sendPasswordResetEmail = async (email, token) => {
           </p>
 
           <p>
-            If you did not request this password reset, you can safely ignore this email.
+            If you did not request a password reset, you can safely ignore this email.
           </p>
         </body>
       </html>
     `,
   });
 };
-
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
