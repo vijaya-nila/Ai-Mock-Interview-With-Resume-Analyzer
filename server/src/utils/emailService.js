@@ -1,35 +1,37 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
 
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: process.env.EMAIL_USER,
-//     pass: process.env.EMAIL_PASS,
-//   },
-//   tls: {
-//     rejectUnauthorized: false,
-//   },
-// });
+// Render environment-ல் Gmail SMTP IPv6-க்கு போகாமல் IPv4-ஐ முதலில் பயன்படுத்தும்
+dns.setDefaultResultOrder("ipv4first");
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
+
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+
   tls: {
     rejectUnauthorized: false,
   },
 });
 
+// ==============================
+// SEND VERIFICATION EMAIL
+// ==============================
 const sendVerificationEmail = async (email, token) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
+  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(
+    token
+  )}`;
 
   await transporter.sendMail({
     from: `"AI Assistant" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify Your Email",
+
     html: `
       <!DOCTYPE html>
       <html>
@@ -70,13 +72,19 @@ const sendVerificationEmail = async (email, token) => {
   });
 };
 
+// ==============================
+// SEND PASSWORD RESET EMAIL
+// ==============================
 const sendPasswordResetEmail = async (email, token) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+    token
+  )}`;
 
   await transporter.sendMail({
     from: `"AI Assistant" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Reset Your Password",
+
     html: `
       <!DOCTYPE html>
       <html>
@@ -108,13 +116,14 @@ const sendPasswordResetEmail = async (email, token) => {
           </p>
 
           <p>
-            If you did not request a password reset, you can safely ignore this email.
+            If you did not request this password reset, you can safely ignore this email.
           </p>
         </body>
       </html>
     `,
   });
 };
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
