@@ -91,31 +91,33 @@ const register = async (req, res) => {
       name,
       email: normalizedEmail,
       password,
-      emailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires,
+      emailVerified: true, // Set to true for testing; change to false in production
+      // emailVerificationToken: verificationToken,
+      // emailVerificationExpires: verificationExpires,
     });
+    
 
+    //mail sending code
     // Send verification email
-    try {
-      await sendVerificationEmail(
-        user.email,
-        verificationToken
-      );
-    } catch (emailError) {
-      console.error(
-        "Verification Email Error:",
-        emailError.message
-      );
+    // try {
+    //   await sendVerificationEmail(
+    //     user.email,
+    //     verificationToken
+    //   );
+    // } catch (emailError) {
+    //   console.error(
+    //     "Verification Email Error:",
+    //     emailError.message
+    //   );
 
-      // Remove user if email could not be sent
-      await User.findByIdAndDelete(user._id);
+    //   // Remove user if email could not be sent
+    //   await User.findByIdAndDelete(user._id);
 
-      return res.status(500).json({
-        message:
-          "Registration failed because verification email could not be sent",
-      });
-    }
+    //   return res.status(500).json({
+    //     message:
+    //       "Registration failed because verification email could not be sent",
+    //   });
+    // }
 
     res.status(201).json({
       message:
