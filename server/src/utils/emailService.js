@@ -118,23 +118,52 @@
 //   sendPasswordResetEmail,
 // };
 
+const sendBrevoEmail = async (to, subject, html) => {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "AI Mock Interview",
+        email: "vijisubu2314@gmail.com",
+      },
+      to: [
+        {
+          email: to,
+        },
+      ],
+      subject,
+      htmlContent: html,
+    }),
+  });
 
-const { Resend } = require("resend");
+  const data = await response.json();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+  if (!response.ok) {
+    console.error("Brevo Email Error:", data);
+    throw new Error(data.message || "Failed to send email");
+  }
+
+  console.log("Brevo Email Sent:", data);
+  return data;
+};
 
 const sendVerificationEmail = async (email, token) => {
   const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
 
-  await resend.emails.send({
-    from: "AI Assistant <onboarding@resend.dev>",
-    to: email,
-    subject: "Verify Your Email",
-    html: `
+  await sendBrevoEmail(
+    email,
+    "Verify Your Email",
+    `
       <!DOCTYPE html>
       <html>
         <body>
-          <h2>Welcome to AI Assistant!</h2>
+          <h2>Welcome to AI Mock Interview!</h2>
+
           <p>
             Thank you for registering. Please verify your email address
             by clicking the button below.
@@ -164,17 +193,16 @@ const sendVerificationEmail = async (email, token) => {
         </body>
       </html>
     `,
-  });
+  );
 };
 
 const sendPasswordResetEmail = async (email, token) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(token)}`;
 
-  await resend.emails.send({
-    from: "AI Assistant <onboarding@resend.dev>",
-    to: email,
-    subject: "Reset Your Password",
-    html: `
+  await sendBrevoEmail(
+    email,
+    "Reset Your Password",
+    `
       <!DOCTYPE html>
       <html>
         <body>
@@ -208,11 +236,10 @@ const sendPasswordResetEmail = async (email, token) => {
         </body>
       </html>
     `,
-  });
+  );
 };
 
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
 };
-
