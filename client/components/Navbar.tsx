@@ -33,14 +33,11 @@ export function Navbar() {
 
   // User avatar
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
-
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
-  /*
-   * ======================================================
-   * ROLE / PERMISSION BASED NAVIGATION
-   * ======================================================
-   */
+  // ======================================================
+  // ALL NAVIGATION LINKS
+  // ======================================================
 
   const allNavLinks: {
     href: string;
@@ -48,6 +45,7 @@ export function Navbar() {
     icon: string;
     permission?: Permission;
   }[] = [
+    // Student features
     {
       href: "/dashboard",
       label: "Dashboard",
@@ -86,12 +84,6 @@ export function Navbar() {
       icon: "👨‍🏫",
       permission: "review_performance",
     },
-    // {
-    //   href: "/mentor/reviews",
-    //   label: "Performance Review",
-    //   icon: "📈",
-    //   permission: "review_performance",
-    // },
     {
       href: "/mentor/feedback",
       label: "Feedback",
@@ -126,18 +118,72 @@ export function Navbar() {
     },
   ];
 
-  /*
-   * Only show links allowed for the current role.
-   *
-   * IMPORTANT:
-   * This only controls UI visibility.
-   * Backend authorization remains the final security layer.
-   */
+  // ======================================================
+  // ROLE / PERMISSION BASED NAVIGATION
+  // ======================================================
 
   const navLinks = useMemo(() => {
     if (!isLoggedIn || !user) {
       return [];
     }
+
+    // ==================================================
+    // ADMINISTRATOR
+    // Admin sees ONLY admin pages.
+    // Student pages and Profile are hidden.
+    // ==================================================
+
+    if (user.role === "Administrator") {
+      return allNavLinks.filter((link) =>
+        [
+          "/admin",
+          "/admin/users",
+          "/admin/activity",
+          "/admin/settings",
+        ].includes(link.href)
+      );
+    }
+
+    // ==================================================
+    // MENTOR
+    // Permission-based navigation
+    // ==================================================
+
+   if (user.role === "Mentor") {
+  return allNavLinks.filter((link) => {
+
+    // Mentor-ku Profile vendaam
+    if (link.href === "/profile") {
+      return false;
+    }
+
+    // Admin pages vendaam
+    if (link.href.startsWith("/admin")) {
+      return false;
+    }
+
+    // Student pages vendaam
+    if (
+      link.href === "/dashboard" ||
+      link.href === "/practice" ||
+      link.href === "/history" ||
+      link.href === "/leaderboard"
+    ) {
+      return false;
+    }
+
+    // Permission check
+    if (!link.permission) {
+      return false;
+    }
+
+    return hasPermission(user.role, link.permission);
+  });
+}
+    // ==================================================
+    // STUDENT
+    // Permission-based navigation
+    // ==================================================
 
     return allNavLinks.filter((link) => {
       if (!link.permission) {
@@ -148,11 +194,9 @@ export function Navbar() {
     });
   }, [isLoggedIn, user]);
 
-  /*
-   * ======================================================
-   * PUBLIC NAVIGATION
-   * ======================================================
-   */
+  // ======================================================
+  // PUBLIC NAVIGATION
+  // ======================================================
 
   const publicNavLinks = [
     {
@@ -182,6 +226,7 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+
           {/* ======================================================
               LOGO
           ====================================================== */}
@@ -255,7 +300,7 @@ export function Navbar() {
                   </div>
 
                   <span className="text-sm text-muted-foreground font-medium">
-                    Hi,{" "}
+                    Hi{" "}
                     <span className="text-foreground font-semibold">
                       {firstName}
                     </span>
@@ -335,10 +380,13 @@ export function Navbar() {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+          mobileOpen
+            ? "max-h-screen opacity-100"
+            : "max-h-0 opacity-0"
         }`}
       >
         <div className="bg-background/95 backdrop-blur-xl border-t border-border/50 px-4 py-4 space-y-1">
+
           {/* Mobile nav links */}
 
           {(isLoggedIn ? navLinks : publicNavLinks).map((link) => (
@@ -352,7 +400,9 @@ export function Navbar() {
               >
                 <span className="text-lg">{link.icon}</span>
 
-                <span className="font-medium">{link.label}</span>
+                <span className="font-medium">
+                  {link.label}
+                </span>
 
                 {isActive(link.href) && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
@@ -369,6 +419,7 @@ export function Navbar() {
 
           {isLoggedIn ? (
             <div className="space-y-2">
+
               {/* User information */}
 
               <div className="flex items-center gap-3 px-4 py-2">
@@ -396,26 +447,22 @@ export function Navbar() {
               {/* Quick actions */}
 
               <div className="grid grid-cols-2 gap-2 px-1">
-                {navLinks
-                  .filter(
-                    (item) =>
-                      item.href === "/dashboard" ||
-                      item.href === "/practice" ||
-                      item.href === "/mentor" ||
-                      item.href === "/admin",
-                  )
-                  .map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors">
-                        <span className="text-sm">{item.icon}</span>
+                {navLinks.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors">
+                      <span className="text-sm">
+                        {item.icon}
+                      </span>
 
-                        <span className="text-xs font-medium text-foreground">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                      <span className="text-xs font-medium text-foreground">
+                        {item.label}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
               </div>
+
+              {/* Logout */}
 
               <Button
                 onClick={logout}
@@ -428,7 +475,10 @@ export function Navbar() {
           ) : (
             <div className="space-y-2 pt-1">
               <Link href="/login" className="block">
-                <Button variant="outline" className="w-full rounded-xl">
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                >
                   Login
                 </Button>
               </Link>

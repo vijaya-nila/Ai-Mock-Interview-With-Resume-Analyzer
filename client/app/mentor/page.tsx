@@ -40,9 +40,15 @@ const MentorDashboard = () => {
   const { user, token, isLoading: authLoading } = useAuth();
 
   const [students, setStudents] = useState<StudentPerformance[]>([]);
-  const [selectedStudent, setSelectedStudent] =
-    useState<StudentDetails | null>(null);
-
+  const [selectedStudent, setSelectedStudent] = useState<StudentDetails | null>(
+    null,
+  );
+  const [dashboardStats, setDashboardStats] = useState({
+    totalStudents: 0,
+    totalInterviews: 0,
+    averageScore: 0,
+    bestScore: 0,
+  });
   const [interviews, setInterviews] = useState<InterviewPerformance[]>([]);
 
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -51,9 +57,7 @@ const MentorDashboard = () => {
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
-  const [sentFeedback, setSentFeedback] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [sentFeedback, setSentFeedback] = useState<Record<string, boolean>>({});
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -82,9 +86,7 @@ const MentorDashboard = () => {
         setLoading(true);
         setError("");
 
-        const response = await axiosInstance.get(
-          "/api/mentor/students"
-        );
+        const response = await axiosInstance.get("/api/mentor/students");
 
         setStudents(response.data.students || []);
       } catch (error: any) {
@@ -92,7 +94,7 @@ const MentorDashboard = () => {
 
         setError(
           error?.response?.data?.message ||
-            "Failed to load student performance"
+            "Failed to load student performance",
         );
       } finally {
         setLoading(false);
@@ -101,7 +103,36 @@ const MentorDashboard = () => {
 
     fetchStudents();
   }, [token, user, authLoading]);
+  
 
+  // ============================================================
+// FETCH MENTOR DASHBOARD STATS
+// ============================================================
+
+useEffect(() => {
+  const fetchDashboardStats = async () => {
+    if (authLoading || !token || !user) return;
+
+    if (user.role !== "Mentor") return;
+
+    try {
+      const response = await axiosInstance.get("/api/mentor/dashboard");
+
+      setDashboardStats(
+        response.data.stats || {
+          totalStudents: 0,
+          totalInterviews: 0,
+          averageScore: 0,
+          bestScore: 0,
+        },
+      );
+    } catch (error: any) {
+      console.error("Mentor Dashboard Stats Error:", error);
+    }
+  };
+
+  fetchDashboardStats();
+}, [token, user, authLoading]);
   // ============================================================
   // VIEW STUDENT PERFORMANCE
   // ============================================================
@@ -113,13 +144,12 @@ const MentorDashboard = () => {
       setSuccess("");
 
       const response = await axiosInstance.get(
-        `/api/mentor/students/${studentId}`
+        `/api/mentor/students/${studentId}`,
       );
 
       setSelectedStudent(response.data.student);
 
-      const studentInterviews =
-        response.data.performance?.interviews || [];
+      const studentInterviews = response.data.performance?.interviews || [];
 
       setInterviews(studentInterviews);
 
@@ -129,21 +159,18 @@ const MentorDashboard = () => {
       // Check which interviews already have feedback
       const existingFeedback: Record<string, boolean> = {};
 
-      studentInterviews.forEach(
-        (interview: InterviewPerformance) => {
-          if (interview.mentorFeedback?.trim()) {
-            existingFeedback[interview._id] = true;
-          }
+      studentInterviews.forEach((interview: InterviewPerformance) => {
+        if (interview.mentorFeedback?.trim()) {
+          existingFeedback[interview._id] = true;
         }
-      );
+      });
 
       setSentFeedback(existingFeedback);
     } catch (error: any) {
       console.error("Student Performance Error:", error);
 
       setError(
-        error?.response?.data?.message ||
-          "Failed to load student performance"
+        error?.response?.data?.message || "Failed to load student performance",
       );
     } finally {
       setDetailsLoading(false);
@@ -168,8 +195,7 @@ const MentorDashboard = () => {
       setError("");
       setSuccess("");
 
-      await axiosInstance.put(
-        `/api/mentor/feedback/${interviewId}`, {
+      await axiosInstance.put(`/api/mentor/feedback/${interviewId}`, {
         feedback: text,
       });
 
@@ -181,8 +207,8 @@ const MentorDashboard = () => {
                 ...interview,
                 mentorFeedback: text,
               }
-            : interview
-        )
+            : interview,
+        ),
       );
 
       // Mark feedback as sent
@@ -201,10 +227,7 @@ const MentorDashboard = () => {
     } catch (error: any) {
       console.error("Feedback Error:", error);
 
-      setError(
-        error?.response?.data?.message ||
-          "Failed to send feedback"
-      );
+      setError(error?.response?.data?.message || "Failed to send feedback");
     } finally {
       setFeedbackLoading(null);
     }
@@ -217,9 +240,7 @@ const MentorDashboard = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">
-          Loading...
-        </p>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -280,6 +301,64 @@ const MentorDashboard = () => {
             {success}
           </div>
         )}
+
+        {/* =====================================================
+    DASHBOARD STATISTICS
+====================================================== */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Total Students */}
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Total Students</p>
+
+            <h3 className="text-3xl font-bold mt-2">
+              {dashboardStats.totalStudents}
+            </h3>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Registered students
+            </p>
+          </Card>
+
+          {/* Total Interviews */}
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Total Interviews</p>
+
+            <h3 className="text-3xl font-bold mt-2">
+              {dashboardStats.totalInterviews}
+            </h3>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Completed interviews
+            </p>
+          </Card>
+
+          {/* Average Score */}
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Average Score</p>
+
+            <h3 className="text-3xl font-bold mt-2">
+              {dashboardStats.averageScore}
+            </h3>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Overall student performance
+            </p>
+          </Card>
+
+          {/* Best Score */}
+          <Card className="p-6">
+            <p className="text-sm text-muted-foreground">Best Score</p>
+
+            <h3 className="text-3xl font-bold mt-2">
+              {dashboardStats.bestScore}
+            </h3>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Highest interview score
+            </p>
+          </Card>
+        </div>
 
         {/* =====================================================
             STUDENTS PERFORMANCE
@@ -576,13 +655,24 @@ const MentorDashboard = () => {
 
                             {/* Previously sent feedback */}
 
-                            {interview.feedback && (
+                            {interview.mentorFeedback && (
                               <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                 <p className="text-xs font-semibold text-muted-foreground mb-1">
                                   Previously Sent Feedback
                                 </p>
 
-                                <p className="text-sm">{interview.feedback}</p>
+                                <p className="text-sm">
+                                  {interview.mentorFeedback}
+                                </p>
+
+                                {interview.mentorFeedbackSentAt && (
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Sent on:{" "}
+                                    {new Date(
+                                      interview.mentorFeedbackSentAt,
+                                    ).toLocaleString()}
+                                  </p>
+                                )}
                               </div>
                             )}
                           </td>

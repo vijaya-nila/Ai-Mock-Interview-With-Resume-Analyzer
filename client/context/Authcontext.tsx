@@ -144,3 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // ── Raw context export (used by useAuth hook) ─────────────
 export { AuthContext };
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
+  return context;
+}

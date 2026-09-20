@@ -25,18 +25,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "view_challenges",
   ],
 
-  Mentor: [
-    "view_dashboard",
-    "view_practice",
-    "view_sessions",
-    "view_leaderboard",
-    "view_profile",
-    "view_challenges",
-    "manage_challenges",
-    "review_performance",
-    "provide_feedback",
-  ],
-
+  Mentor: ["view_profile", "review_performance", "provide_feedback"],
   Administrator: [
     "view_dashboard",
     "view_profile",
@@ -60,10 +49,10 @@ export const hasPermission = (
  * Frontend route → allowed roles
  */
 export const protectedRoutes = {
-  "/dashboard": ["Student", "Mentor", "Administrator"],
-  "/practice": ["Student", "Mentor"],
-  "/history": ["Student", "Mentor"],
-  "/leaderboard": ["Student", "Mentor"],
+  "/dashboard": ["Student"],
+  "/practice": ["Student"],
+  "/history": ["Student"],
+  "/leaderboard": ["Student"],
   "/profile": ["Student", "Mentor", "Administrator"],
   "/challenges": ["Student", "Mentor"],
   "/mentor": ["Mentor"],

@@ -9,10 +9,18 @@ const {
   getStudentPerformance,
   getAllStudentsPerformance,
   updateStudentFeedback,
+  getMentorDashboardStats,
 } = require("../controllers/mentorController.js");
 
 // All mentor routes require authentication
 router.use(protect);
+
+// Get mentor dashboard statistics
+router.get(
+  "/dashboard",
+  requireRole("Mentor"),
+  getMentorDashboardStats
+);
 
 // Get all students performance
 router.get(

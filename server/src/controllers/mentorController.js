@@ -209,10 +209,121 @@ const updateStudentFeedback = async (req, res) => {
     });
   }
 };
+// ======================================================
+// Get Mentor Dashboard Statistics
+// Mentor only
+// ======================================================
 
+const getMentorDashboardStats = async (req, res) => {
+  try {
+    // Get all students
+    const students = await User.find({
+      role: "Student",
+    }).select("_id name email");
+
+    // Get all completed interviews
+    const interviews = await Interview.find({
+      isComplete: true,
+    }).select("userId score createdAt domain company");
+
+    const totalStudents = students.length;
+    const totalInterviews = interviews.length;
+
+    // Calculate average score
+    const totalScore = interviews.reduce(
+      (sum, interview) => sum + (interview.score || 0),
+      0
+    );
+
+    const averageScore =
+      totalInterviews > 0
+        ? Math.round(totalScore / totalInterviews)
+        : 0;
+
+    // Best score
+    const bestScore =
+      totalInterviews > 0
+        ? Math.max(
+            ...interviews.map(
+              (interview) => interview.score || 0
+            )
+          )
+        : 0;
+
+    // Student-wise performance
+    const studentPerformance = students.map((student) => {
+      const studentInterviews = interviews.filter(
+        (interview) =>
+          interview.userId?.toString() ===
+          student._id.toString()
+      );
+
+      const studentTotal = studentInterviews.length;
+
+      const studentAverage =
+        studentTotal > 0
+          ? Math.round(
+              studentInterviews.reduce(
+                (sum, interview) =>
+                  sum + (interview.score || 0),
+                0
+              ) / studentTotal
+            )
+          : 0;
+
+      return {
+        studentId: student._id,
+        name: student.name,
+        email: student.email,
+        totalInterviews: studentTotal,
+        averageScore: studentAverage,
+      };
+    });
+
+    // Top performing students
+    const topStudents = [...studentPerformance]
+      .filter((student) => student.totalInterviews > 0)
+      .sort((a, b) => b.averageScore - a.averageScore)
+      .slice(0, 5);
+
+    // Students who need improvement
+    const studentsNeedingImprovement = [...studentPerformance]
+      .filter(
+        (student) =>
+          student.totalInterviews > 0 &&
+          student.averageScore < 60
+      )
+      .sort((a, b) => a.averageScore - b.averageScore)
+      .slice(0, 5);
+
+    return res.status(200).json({
+      success: true,
+      stats: {
+        totalStudents,
+        totalInterviews,
+        averageScore,
+        bestScore,
+        topStudents,
+        studentsNeedingImprovement,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Mentor Dashboard Stats Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch mentor dashboard statistics",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getStudentPerformance,
   getAllStudentsPerformance,
   updateStudentFeedback,
+  getMentorDashboardStats,
 };

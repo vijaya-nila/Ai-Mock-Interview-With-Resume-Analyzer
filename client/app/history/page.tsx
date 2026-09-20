@@ -60,7 +60,9 @@ export default function HistoryPage() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [filterDomain, setFilterDomain] = useState<string>("All");
-
+  const [expandedInterviews, setExpandedInterviews] = useState<Set<string>>(
+    new Set(),
+  );
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
       router.push("/login");
@@ -295,30 +297,63 @@ export default function HistoryPage() {
                         >
                           Retake
                         </Button>
+
+                        {/* V Arrow */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedInterviews((prev) => {
+                              const next = new Set(prev);
+
+                              if (next.has(interview.id)) {
+                                next.delete(interview.id);
+                              } else {
+                                next.add(interview.id);
+                              }
+
+                              return next;
+                            });
+                          }}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-border hover:bg-muted transition-all"
+                          aria-label="Toggle feedback"
+                        >
+                          <span
+                            className={`text-xl transition-transform duration-200 ${
+                              expandedInterviews.has(interview.id)
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          >
+                            ⌄
+                          </span>
+                        </button>
                       </div>
                     </div>
                     {/* AI Feedback */}
-                    {interview.feedback && interview.feedback.trim() !== "" && (
-                      <div className="mt-4 pt-4 border-t border-border/50">
-                        <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">🤖</span>
-                            <h4 className="font-semibold text-sm text-foreground">
-                              AI Feedback
-                            </h4>
-                          </div>
+                    {!expandedInterviews.has(interview.id) &&
+                      interview.feedback &&
+                      interview.feedback.trim() !== "" && (
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">🤖</span>
+                              <h4 className="font-semibold text-sm text-foreground">
+                                AI Feedback
+                              </h4>
+                            </div>
 
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {interview.feedback}
-                          </p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {interview.feedback}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Mentor Feedback */}
-                    {interview.mentorFeedbackSent &&
-                      interview.mentorFeedback &&
-                      interview.mentorFeedback.trim() !== "" && (
+                     {!expandedInterviews.has(interview.id) &&
+                        interview.mentorFeedbackSent &&
+                        interview.mentorFeedback &&
+                        interview.mentorFeedback.trim() !== "" && (
                         <div className="mt-3">
                           <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
                             <div className="flex items-center gap-2 mb-2">
