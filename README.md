@@ -1,76 +1,53 @@
-# 🧠 AI Career Copilot  
-### Resume Intelligence • AI Interview Simulation • Career Guidance System
+# 🤖 AI Mock Interview & Placement Readiness Platform
 
-An AI-powered career preparation platform that analyzes resumes, provides structured career insights, and conducts AI-driven mock interviews with automated scoring and feedback.
-
-Powered by **Groq AI (LLaMA 3)** for ultra-fast inference and real-time conversational intelligence.
-
----
+An AI-powered web application that helps students prepare for technical interviews and improve their placement readiness through **adaptive interviews, resume analysis, performance tracking, and personalized recommendations**.
 
 ## 🚀 Features
 
-### 📄 Resume Intelligence Engine
-- Upload and parse resumes (PDF/Text)
-- Extract structured data:
-  - Skills
-  - Experience
-  - Education
-- Infer candidate level (Fresher / Junior / Mid)
-- Identify skill gaps
-- Suggest relevant job roles
-- Generate improvement roadmap
+* 🎯 **Adaptive Interview Engine** – Dynamically increases, decreases, or maintains question difficulty based on candidate performance.
+* 🧠 **AI Follow-up Questions** – Maintains interview context and generates relevant follow-up questions.
+* 📄 **Resume Analyzer** – Analyzes resumes and identifies technical skill gaps.
+* 📊 **Placement Readiness Engine** – Combines resume, interview, and skill assessment data to generate readiness results.
+* 🗺️ **Personalized Roadmap** – Recommends technologies, projects, certifications, and interview topics based on weaknesses.
+* 🏢 **AI Recruiter Simulator** – Provides company-specific interview experiences for profiles such as Google, Amazon, Microsoft, TCS, Infosys, and Startups.
+* 🏆 **Peer Challenge Arena** – AI-generated HR, Technical, Aptitude, and Domain challenges with scores, ranks, badges, streaks, and leaderboards.
+* 🔐 **Enterprise Authentication** – Password validation, password reset, account lockout, login history, session management, and security alerts.
+* 👥 **RBAC** – Separate permissions for **Student, Mentor, and Administrator** roles.
+* 📈 **Performance History** – Tracks interview progress and allows recommendations to evolve over time.
+* 🚫 **Duplicate & Skip Handling** – Prevents duplicate questions, detects repeated answers, and handles skipped questions.
 
----
+## 🛠️ Tech Stack
 
-### 💬 AI Career Assistant (Groq Powered)
-- Context-aware chat interface
-- Resume-based personalized guidance
-- Career path recommendations
-- Skill improvement suggestions
-- Interview preparation support
-- Real-time responses using Groq LLaMA 3
+**Frontend:** Next.js, React, TypeScript, Tailwind CSS
+**Backend:** Node.js, Express.js
+**Database:** MongoDB, Mongoose
+**AI:** Groq LLM
+**Authentication:** JWT, Session Management, RBAC
+**Deployment:** Vercel + Render
 
----
+## 👥 Roles
 
-### 🎤 Mock Interview System (STRICT 3 QUESTIONS)
-AI conducts a structured interview:
+| Role          | Access                                    |
+| ------------- | ----------------------------------------- |
+| Student       | Interviews, Reports, Challenges, Progress |
+| Mentor        | Student Performance & Feedback            |
+| Administrator | User Management & Platform Monitoring     |
 
-1. Self introduction & communication clarity  
-2. Technical / project deep dive  
-3. Career goals & problem-solving mindset  
+## 🔐 Authentication Note
 
-**Evaluation Output:**
-- Score (0–10)
-- Communication analysis
-- Technical depth evaluation
-- Strengths & weaknesses
-- Improvement suggestions
+Email verification is implemented in the authentication flow. However, **live email delivery is currently limited in the Render Free deployment environment due to SMTP/email-service restrictions**.
 
----
+## 🌐 Live Demo
 
-## 🧰 Tech Stack
+**Frontend:**
+https://ai-mock-interview-with-resume-analyze.vercel.app
 
-**Frontend**
-- React.js / Next.js
-- Tailwind CSS
+**Backend:**
+https://ai-mock-interview-with-resume-analyzer-1.onrender.com
 
-**Backend**
-- Node.js / Express.js
+## 👨‍💻 Author
 
-**AI Layer**
-- 🚀 Groq AI API
-- Model: `openai/gpt-oss-120b`
-- Prompt Engineering System
+**Vijayalakshmi B**
+B.E. Computer Science and Engineering
 
-**Utilities**
-- PDF parsing (pdf-parse / PyPDF2)
-
----
-
-## ⚙️ AI Integration (Groq)
-
-This project uses Groq AI for ultra-fast LLM inference.
-
-## 🌐 Live Demo Link: https://ai-mock-interview-with-resume-analyze.vercel.app/
-
-
+GitHub: https://github.com/vijaya-nila
